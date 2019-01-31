@@ -17,4 +17,8 @@ void loop() {
     Serial.write(mySerial.read());  //print to Serial Monitor
   }
 
+  //Need NMEA sentence $GPGLL
+  //Convert degree and decimal minute to decimal degree
+  //http://aprs.gids.nl/nmea/#gll
+
 }
