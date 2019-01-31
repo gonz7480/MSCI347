@@ -1,131 +1,95 @@
-/**
- * Code to display the time & date from a GPS receiver on a LCD.
- *
- * This code was inspired by http://arduino.cc/en/Tutorial/LiquidCrystal and
- * http://playground.arduino.cc/Tutorials/GPS
- *
- * For more information, see http://quaxio.com/arduino_gps/
- */
-
-#include <LiquidCrystal.h>
+/*
+  Example code for connecting a Parallax GPS module to the Arduino
+  Igor Gonzalez Martin. 05-04-2007
+  igor.gonzalez.martin@gmail.com
+  English translation by djmatic 19-05-2007
+  Listen for the $GPRMC string and extract the GPS location data from this.
+  Display the result in the Arduino's serial monitor.
+*/
 #include <string.h>
 #include <ctype.h>
-
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-
-int rxPin = 0; // RX pin
-int txPin = 1; // TX pin
-int byteGPS=-1;
-char cmd[7] = "$GPRMC";
-int counter1 = 0; // counts how many bytes were received (max 300)
-int counter2 = 0; // counts how many commas were seen
-int offsets[13];
-char buf[300] = "";
-
-/**
- * Setup display and gps
- */
+int ledPin = 13;                  // LED test pin
+int rxPin = 0;                    // RX PIN
+int txPin = 1;                    // TX TX
+int byteGPS = -1;
+char linea[300] = "";
+char comandoGPR[7] = "$GPRMC";
+int cont = 0;
+int bien = 0;
+int conta = 0;
+int indices[13];
 void setup() {
+  pinMode(ledPin, OUTPUT);       // Initialize LED pin
   pinMode(rxPin, INPUT);
   pinMode(txPin, OUTPUT);
   Serial.begin(4800);
-  lcd.begin(16, 2);
-  lcd.print("waiting for gps");
-  offsets[0] = 0;
-  reset();
-}
-
-void reset() {
-  counter1 = 0;
-  counter2 = 0;
-}
-
-int get_size(int offset) {
-  return offsets[offset+1] - offsets[offset] - 1;
-}
-
-int handle_byte(int byteGPS) {
-  buf[counter1] = byteGPS;
-  Serial.print((char)byteGPS);
-  counter1++;
-  if (counter1 == 300) {
-    return 0;
+  for (int i = 0; i < 300; i++) { // Initialize a buffer for received data
+    linea[i] = ' ';
   }
-  if (byteGPS == ',') {
-    counter2++;
-    offsets[counter2] = counter1;
-    if (counter2 == 13) {
-      return 0;
-    }
-  }
-  if (byteGPS == '*') {
-    offsets[12] = counter1;
-  }
-
-  // Check if we got a <LF>, which indicates the end of line
-  if (byteGPS == 10) {
-    // Check that we got 12 pieces, and that the first piece is 6 characters
-    if (counter2 != 12 || (get_size(0) != 6)) {
-      return 0;
-    }
-
-    // Check that we received $GPRMC
-    for (int j=0; j<6; j++) {
-      if (buf[j] != cmd[j]) {
-        return 0;
-      }
-    }
-
-    // Check that time is well formed
-    if (get_size(1) != 10) {
-      return 0;
-    }
-
-    // Check that date is well formed
-    if (get_size(9) != 6) {
-      return 0;
-    }
-
-    // TODO: compute and validate checksum
-
-    // TODO: handle timezone offset
-
-    // print time
-    lcd.clear();
-    for (int j=0; j<6; j++) {
-      lcd.print(buf[offsets[1]+j]);
-      if (j==1) {
-        lcd.print("h");
-      } else if (j==3) {
-        lcd.print("m");
-      } else if (j==5) {
-        lcd.print("s UTC");
-      }
-    }
-
-    // print date
-    lcd.setCursor(0, 1);
-    for (int j=0; j<6; j++) {
-      lcd.print(buf[offsets[9]+j]);
-      if (j==1 || j==3) {
-        lcd.print(".");
-      }
-    }
-    return 0;
-  }
-  return 1;
 }
-
-/**
- * Main loop
- */
 void loop() {
-  byteGPS=Serial.read();         // Read a byte of the serial port
+  digitalWrite(ledPin, HIGH);
+  byteGPS = Serial.read();       // Read a byte of the serial port
   if (byteGPS == -1) {           // See if the port is empty yet
     delay(100);
   } else {
-    if (!handle_byte(byteGPS)) {
-      reset();
+    // note: there is a potential buffer overflow here!
+    linea[conta] = byteGPS;      // If there is serial port data, it is put in the buffer
+    conta++;
+    Serial.print(byteGPS);
+    if (byteGPS == 13) {         // If the received byte is = to 13, end of transmission
+      // note: the actual end of transmission is <CR><LF> (i.e. 0x13 0x10)
+      digitalWrite(ledPin, LOW);
+      cont = 0;
+      bien = 0;
+      // The following for loop starts at 1, because this code is clowny and the first byte is the <LF> (0x10) from the previous transmission.
+      for (int i = 1; i < 7; i++) { // Verifies if the received command starts with $GPR
+        if (linea[i] == comandoGPR[i - 1]) {
+          bien++;
+        }
+      }
+      if (bien == 6) {           // If yes, continue and process the data
+        for (int i = 0; i < 300; i++) {
+          if (linea[i] == ',') { // check for the position of the  "," separator
+            // note: again, there is a potential buffer overflow here!
+            indices[cont] = i;
+            cont++;
+          }
+          if (linea[i] == '*') { // ... and the "*"
+            indices[12] = i;
+            cont++;
+          }
+        }
+        Serial.println("");      // ... and write to the serial port
+        Serial.println("");
+        Serial.println("---------------");
+        for (int i = 0; i < 12; i++) {
+          switch (i) {
+            case 0 : Serial.print("Time in UTC (HhMmSs): "); break;
+            case 1 : Serial.print("Status (A=OK,V=KO): "); break;
+            case 2 : Serial.print("Latitude: "); break;
+            case 3 : Serial.print("Direction (N/S): "); break;
+            case 4 : Serial.print("Longitude: "); break;
+            case 5 : Serial.print("Direction (E/W): "); break;
+            case 6 : Serial.print("Velocity in knots: "); break;
+            case 7 : Serial.print("Heading in degrees: "); break;
+            case 8 : Serial.print("Date UTC (DdMmAa): "); break;
+            case 9 : Serial.print("Magnetic degrees: "); break;
+            case 10 : Serial.print("(E/W): "); break;
+            case 11 : Serial.print("Mode: "); break;
+            case 12 : Serial.print("Checksum: "); break;
+          }
+          for (int j = indices[i]; j < (indices[i + 1] - 1); j++) {
+            Serial.print(linea[j + 1]);
+          }
+          Serial.println("");
+        }
+        Serial.println("---------------");
+      }
+      conta = 0;                  // Reset the buffer
+      for (int i = 0; i < 300; i++) { //
+        linea[i] = ' ';
+      }
     }
   }
 }
