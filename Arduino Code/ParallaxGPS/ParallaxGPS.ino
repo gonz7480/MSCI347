@@ -17,6 +17,8 @@ bool valid = false; //bool for navigation receiver warning
 int lat_ind[2] = {0,0}; //storing start/end indices for lat
 int lon_ind[2] = {0,0}; //storing start/end indices for lon
 
+
+
 void loop() {
 //  if(mySerial.available()){ //if data is available
 //    sentence = mySerial.read();  //print to Serial Monitor
@@ -43,31 +45,34 @@ void loop() {
         //Save the starting index of latitude
         if(commas == 3){
 //          Serial.println(i);
-          if(lat[0] == 0){
-            lat[0] = i; 
+          if(lat_ind[0] == 0){
+            lat_ind[0] = i; 
 //            Serial.println(lat[0]); 
           }
         }
         //Save ending index of latitude and starting index of longitude
         if(commas == 4){
-          if(lat[1] == 0){
-            lat[1] = i-2;  
+          if(lat_ind[1] == 0){
+            lat_ind[1] = i-2;  
           }
-          if(lon[0] == 0){
-            lon[0] = i; 
+          if(lon_ind[0] == 0){
+            lon_ind[0] = i; 
           }
         }
         //Save ending index of longitude
         if(commas == 5){
-          if(lon[1] == 0){
-            lon[1] = i-2;  
+          if(lon_ind[1] == 0){
+            lon_ind[1] = i-2;  
           }  
         }
       }  
     }  
   }
 
-  
+  float lat_degree = sentence[
+  float lat_min = 
+
+  (3640.5557 - (3640.5557%100))
 
   //Convert degree and decimal minute to decimal degree
 
