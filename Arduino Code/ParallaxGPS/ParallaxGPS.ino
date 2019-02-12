@@ -6,6 +6,19 @@
 
 SoftwareSerial mySerial(rxPin, txPin); //declare SoftwareSerial object
 
+/* Function to convert degree decimal minute format to decimal degree
+ * String coord: string containing lat/lon numbers
+ * bool negative: boolean of whether the value should be negative
+ */
+double toDecimalDegrees(String coord, bool negative = false){
+  if(negative){
+    return -(coord.toInt()/100) + (double)(coord.toDouble() - 100*(coord.toInt()/100))/60.0;
+  }
+  else{
+    return (coord.toInt()/100) + (double)(coord.toDouble() - 100*(coord.toInt()/100))/60.0;
+  }
+}
+
 void setup() {
   pinMode(rxPin, INPUT); //set receiver pin to input
   Serial.begin(4800); //set serials to correct baud rate
@@ -15,16 +28,13 @@ void setup() {
 int commas = 0; //counting commas in NMEA sentence
 bool valid = false; //bool for navigation receiver warning
 
-String sentence = "";
-String lat = "";
-String lon = "";
-//int lat_degrees = 0;
-//float lat_minutes = 0;
-//int lon_degrees = 0;
-//float lon_degrees = 0;
+String sentence = ""; //Store entire NMEA sentence
 
-double lat_dd = 0.0;
-double lon_dd = 0.0;
+String lat = ""; //Store latitude as string
+String lon = ""; //Store longitude as string
+
+double lat_dd = 0.0; //Store latitude as decimal degrees
+double lon_dd = 0.0; //Store longitude as decimal degrees
 
 
 void loop() {
@@ -42,7 +52,7 @@ void loop() {
         commas++;  
       }
       else{
-        //Store nav receiver warning
+        //Store navigation receiver warning
         if(commas == 2){
           if(sentence[i] == 'A'){
             valid = true;  
@@ -52,15 +62,24 @@ void loop() {
         if(commas == 3){
           lat += sentence[i];
         }
+        if(commas == 4){
+          if(sentence[i] == 'S'){ //If in Southern Hemisphere, set latitude to negative
+            lat_dd = toDecimalDegrees(lat, true);  //Convert to decimal degrees
+          }
+          else{lat_dd = toDecimalDegrees(lat);}  
+        }
         //Store longitude
         if(commas == 5){
           lon += sentence[i];
+        }
+        if(commas == 6){
+          if(sentence[i] == 'W'){ //If in Western Hemisphere, set longitude to negative
+            lon_dd = toDecimalDegrees(lon, true); 
+          }
+          else{lon_dd = toDecimalDegrees(lon);}
         }
       }  
     }  
   }
   
-  //Convert degree and decimal minute to decimal degree
-  lat_dd = (lat.toInt()/100) + (double)(lat.toDouble() - 100*(lat.toInt()/100))/60.0;
-  lon_dd = (lon.toInt()/100) + (double)(lon.toDouble() - 100*(lon.toInt()/100))/60.0;
 }
