@@ -1,8 +1,8 @@
 #include <SoftwareSerial.h>
 
 //define receiver/transmitter pins
-#define rxPin 2
-#define txPin 3
+#define rxPin 3
+#define txPin 4
 
 SoftwareSerial mySerial(rxPin, txPin); //declare SoftwareSerial object
 
@@ -14,9 +14,17 @@ void setup() {
 
 int commas = 0; //counting commas in NMEA sentence
 bool valid = false; //bool for navigation receiver warning
-int lat_ind[2] = {0,0}; //storing start/end indices for lat
-int lon_ind[2] = {0,0}; //storing start/end indices for lon
 
+String sentence = "";
+String lat = "";
+String lon = "";
+//int lat_degrees = 0;
+//float lat_minutes = 0;
+//int lon_degrees = 0;
+//float lon_degrees = 0;
+
+double lat_dd = 0.0;
+double lon_dd = 0.0;
 
 
 void loop() {
@@ -24,7 +32,7 @@ void loop() {
 //    sentence = mySerial.read();  //print to Serial Monitor
 //  }
 
-  char sentence[] = "$GPRMC,002105,A,3640.5557,N,12147.0016,W,000.2,082.1,010219,,,A*63";
+  String sentence = "$GPRMC,002105,A,3640.5557,N,12147.0016,W,000.2,082.1,010219,,,A*63";
 
   //Parses the NMEA sentence for nav receiver warning, lat, and lon
   //If 2nd letter in NMEA code is 'R'...
@@ -34,46 +42,25 @@ void loop() {
         commas++;  
       }
       else{
-        //Save nav receiver warning
+        //Store nav receiver warning
         if(commas == 2){
           if(sentence[i] == 'A'){
-//            Serial.println(sentence[i]);
             valid = true;  
-//            Serial.println(valid);
           }
         }
-        //Save the starting index of latitude
+        //Store latitude
         if(commas == 3){
-//          Serial.println(i);
-          if(lat_ind[0] == 0){
-            lat_ind[0] = i; 
-//            Serial.println(lat[0]); 
-          }
+          lat += sentence[i];
         }
-        //Save ending index of latitude and starting index of longitude
-        if(commas == 4){
-          if(lat_ind[1] == 0){
-            lat_ind[1] = i-2;  
-          }
-          if(lon_ind[0] == 0){
-            lon_ind[0] = i; 
-          }
-        }
-        //Save ending index of longitude
+        //Store longitude
         if(commas == 5){
-          if(lon_ind[1] == 0){
-            lon_ind[1] = i-2;  
-          }  
+          lon += sentence[i];
         }
       }  
     }  
   }
-
-  float lat_degree = sentence[
-  float lat_min = 
-
-  (3640.5557 - (3640.5557%100))
-
+  
   //Convert degree and decimal minute to decimal degree
-
+  lat_dd = (lat.toInt()/100) + (double)(lat.toDouble() - 100*(lat.toInt()/100))/60.0;
+  lon_dd = (lon.toInt()/100) + (double)(lon.toDouble() - 100*(lon.toInt()/100))/60.0;
 }
