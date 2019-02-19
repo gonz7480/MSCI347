@@ -69,6 +69,44 @@ void NMEAparser(String sentence){
   }
 }
 
+/* Function to calculate the angle RoboBuoy needs to turn to so that it is
+ * directly facing its destination.
+ * float angle: the current angle RoboBuoy is pointed at, read from the magnetometer
+ * double currentLat, currentLon: the current GPS coordinates of RoboBuoy
+ * double endLat, endLon: the GPS coordinates of the destination
+ */
+float getAngle(float angle, double currentLat, double currentLon, double endLat, double endLon){
+    int deltaLat = currentLat - endLat;
+    int deltaLon = currentLon - endLon;
+    int hypotenuse = sqrt((deltaLat^2) - (deltaLon^2));
+    float theta = sin(deltaLon/hypotenuse);
+
+    if(deltaLat > 0){
+      if(deltaLon < 0){ //If the difference between longitudes is negative...
+        return angle + 180.0 - theta;
+      }
+      else if(deltaLon > 0){ //If the difference between longitudes is positive...
+        return angle + 180.0 + theta;
+      }
+      else{ //If current position and destination are at the same longitude...
+        return angle + 180.0;  
+      }
+    }
+    else if(deltaLat < 0){
+      if(deltaLon < 0){ //If the difference between longitudes is negative...
+        return angle - theta;
+      }
+      else if(deltaLon > 0){ //If the difference between longitudes is positive...
+        return angle + theta;
+      }
+      else{ //If current position and destination are at the same longitude...
+        return angle;  
+      }
+    }
+}
+
+
+
 void setup() {
   pinMode(rxPin, INPUT); //set receiver pin to input
   Serial.begin(4800); //set serials to correct baud rate
@@ -89,5 +127,6 @@ void loop() {
   String sentence = "$GPRMC,002105,A,3640.5557,N,12147.0016,W,000.2,082.1,010219,,,A*63";
 
   NMEAparser(sentence);
-  
+
+  getAngle(90, 36.65694, -121.79561, 0.0, 0.0);
 }
