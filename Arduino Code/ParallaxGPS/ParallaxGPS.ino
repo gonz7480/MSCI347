@@ -19,32 +19,18 @@ double toDecimalDegrees(String coord, bool negative = false){
   }
 }
 
-void setup() {
-  pinMode(rxPin, INPUT); //set receiver pin to input
-  Serial.begin(4800); //set serials to correct baud rate
-  mySerial.begin(4800);
-}
-
-int commas = 0; //counting commas in NMEA sentence
 bool valid = false; //bool for navigation receiver warning
-
-String sentence = ""; //Store entire NMEA sentence
-
 String lat = ""; //Store latitude as string
 String lon = ""; //Store longitude as string
-
 double lat_dd = 0.0; //Store latitude as decimal degrees
 double lon_dd = 0.0; //Store longitude as decimal degrees
 
-
-void loop() {
-//  if(mySerial.available()){ //if data is available
-//    sentence = mySerial.read();  //print to Serial Monitor
-//  }
-
-  String sentence = "$GPRMC,002105,A,3640.5557,N,12147.0016,W,000.2,082.1,010219,,,A*63";
-
-  //Parses the NMEA sentence for nav receiver warning, lat, and lon
+/* Function to parse NMEA sentence to get nav receiver warning, lat, and lon
+ * String sentence: the NMEA sentence to be used
+ */
+void NMEAparser(String sentence){
+  int commas = 0; //counting commas in NMEA sentence
+  
   //If 2nd letter in NMEA code is 'R'...
   if(sentence[3] == 'R'){
     for(int i = 5; commas <= 5; i++){ //only search sentence up to the 5th comma
@@ -81,5 +67,27 @@ void loop() {
       }  
     }  
   }
+}
+
+void setup() {
+  pinMode(rxPin, INPUT); //set receiver pin to input
+  Serial.begin(4800); //set serials to correct baud rate
+  mySerial.begin(4800);
+}
+
+
+
+String sentence = ""; //Store entire NMEA sentence
+
+
+
+void loop() {
+//  if(mySerial.available()){ //if data is available
+//    sentence = mySerial.read();  //print to Serial Monitor
+//  }
+
+  String sentence = "$GPRMC,002105,A,3640.5557,N,12147.0016,W,000.2,082.1,010219,,,A*63";
+
+  NMEAparser(sentence);
   
 }
