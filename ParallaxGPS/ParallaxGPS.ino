@@ -1,3 +1,5 @@
+///DO NOT USE THIS. NOT UP TO DATE.
+
 #include <SoftwareSerial.h>
 
 //define receiver/transmitter pins
@@ -16,9 +18,5 @@ void loop() {
   if(mySerial.available()){ //if data is available
     Serial.write(mySerial.read());  //print to Serial Monitor
   }
-
-  //Need NMEA sentence $GPGLL
-  //Convert degree and decimal minute to decimal degree
-  //http://aprs.gids.nl/nmea/#gll
 
 }
