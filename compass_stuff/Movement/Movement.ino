@@ -141,10 +141,13 @@ void loop()
     Serial.println();
 
     // Establish our current status
+    float heading = compass();
     double distanceToDestination = TinyGPSPlus::distanceBetween(gps.location.lat(), gps.location.lng(), des_LAT, des_LNG);
     double courseToDestination = TinyGPSPlus::courseTo(gps.location.lat(), gps.location.lng(), des_LAT, des_LNG);
     const char *directionToDestination = TinyGPSPlus::cardinal(courseToDestination);
-    int courseChangeNeeded = (int)(360 + courseToDestination - gps.course.deg()) % 360;
+    //int courseChangeNeeded = (int)(360 + courseToDestination - gps.course.deg()) % 360;
+
+    int courseChangeNeeded = (int)(360 + courseToDestination - heading) % 360;
 
     // debug
     Serial.print("DEBUG: Course2Dest: ");
@@ -158,12 +161,14 @@ void loop()
     Serial.print("  CurSpd: ");
     Serial.println(gps.speed.kmph());
 
-    float l = gps.location.lat();
+    float currLAT = gps.location.lat();
+    float currLON = gps.location.lng();
+    
     Serial.println();
-    Serial.print("Lat: "); Serial.print(l,6); Serial.print("  Lon: "); Serial.println(gps.location.lng());
-    Serial.print("current Angle: "); Serial.println(compass());
+    Serial.print("Lat: "); Serial.print(currLAT,6); Serial.print("  Lon: "); Serial.println(currLON, 6);
+    Serial.print("current Angle: "); Serial.println(heading);
 
-    // Within 20 meters of destination?  We're here!
+    // Within 2 meters of destination?  We're here!
     if (distanceToDestination <= 2)
     {
       Serial.println("CONGRATULATIONS: You've arrived!");
