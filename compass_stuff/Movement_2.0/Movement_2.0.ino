@@ -164,6 +164,7 @@ void loop()
 
     float curr_LAT = gps.location.lat();
     float curr_LNG = gps.location.lng();
+    float heading = compass();
 
     // Establish our current status
     double distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
@@ -175,7 +176,7 @@ void loop()
     //previous location (gps.course.deg() from TinyGPSPlus). People have noticed inaccuracies in course calculation when speed is less than 5kph.
     //For speeds less than 5kph, I've replaced the TinyGPS function with the angle from the compass.
     if(gps.speed.kmph() < 5){
-      courseChangeNeeded = (int)(360 + courseToDestination - compass()) % 360;
+      courseChangeNeeded = (int)(360 + courseToDestination - heading) % 360;
     }
     else{
       courseChangeNeeded = (int)(360 + courseToDestination - gps.course.deg()) % 360;
@@ -186,7 +187,7 @@ void loop()
     Serial.print("DEBUG: Course2Dest: ");
     Serial.print(courseToDestination);
     Serial.print("  CurCourse: ");
-    Serial.print(compass());
+    Serial.print(heading);
     Serial.print("  Dir2Dest: ");
     Serial.print(directionToDestination);
     Serial.print("  RelCourse: ");
@@ -197,7 +198,7 @@ void loop()
     
     Serial.println();
     Serial.print("Lat: "); Serial.print(curr_LAT,6); Serial.print("  Lon: "); Serial.println(curr_LNG, 6);
-    Serial.print("current Angle: "); Serial.println(compass());
+    Serial.print("current Angle: "); Serial.println(heading);
 
     // Within 2 meters of destination?  We're here!
     if (distanceToDestination <= 2)
@@ -232,54 +233,54 @@ void loop()
     //if we are 10 meters or further away from destination
     //go forward 6 seconds between each turn
     if(distanceToDestination >= 10){
-      if(compass() - courseToDestination < 180){
+      if(heading - courseToDestination < 180){
         Serial.println("Turn Left A"); 
-        Serial.println(compass() - courseToDestination);
-        turnLeft(compass() - courseToDestination);
+        Serial.println(heading - courseToDestination);
+        turnLeft(heading - courseToDestination);
         forward(6000);
       }
-      else if(compass() - courseToDestination >= 180){
+      else if(heading - courseToDestination >= 180){
         Serial.println("Turn Right B"); 
-        Serial.println(360 - (compass() - courseToDestination));
-        turnLeft(360 - (compass() - courseToDestination));
+        Serial.println(360 - (heading - courseToDestination));
+        turnLeft(360 - (heading - courseToDestination));
         forward(6000);
       }
-      else if(compass() - courseToDestination >= -180){
+      else if(heading - courseToDestination >= -180){
         Serial.println("Turn Right C");
-        Serial.println(-1*(compass() - courseToDestination));
-        turnRight(-1*(compass() - courseToDestination));
+        Serial.println(-1*(heading - courseToDestination));
+        turnRight(-1*(heading - courseToDestination));
         forward(6000); 
       }
-      else if(compass() - courseToDestination < -180){
+      else if(heading - courseToDestination < -180){
         Serial.println("Turn Left D");
-        Serial.println(360 - (-1*(compass() - courseToDestination)));
-        turnLeft(360 - (-1*(compass() - courseToDestination)));
+        Serial.println(360 - (-1*(heading - courseToDestination)));
+        turnLeft(360 - (-1*(heading - courseToDestination)));
         forward(6000);
       }
       delay(6000);
     }else{ //if we're less than 10m away from destination, go forward 3 seconds between each turn
-      if(compass() - courseToDestination < 180){
+      if(heading - courseToDestination < 180){
         Serial.println("Turn Left E");
-        Serial.println(compass() - courseToDestination);
-        turnLeft(compass() - courseToDestination);
+        Serial.println(heading - courseToDestination);
+        turnLeft(heading - courseToDestination);
         forward(3000);
       }
-      else if(compass() - courseToDestination >= 180){
+      else if(heading - courseToDestination >= 180){
         Serial.println("Turn Right F");
-        Serial.println(360 - (compass() - courseToDestination));
-        turnRight(360 - (compass() - courseToDestination));
+        Serial.println(360 - (heading - courseToDestination));
+        turnRight(360 - (heading - courseToDestination));
         forward(3000);
       }
-      else if(compass() - courseToDestination >= -180){
+      else if(heading - courseToDestination >= -180){
         Serial.println("Turn Right G");
-        Serial.println(-1*(compass() - courseToDestination));
-        turnRight(-1*(compass() - courseToDestination));
+        Serial.println(-1*(heading - courseToDestination));
+        turnRight(-1*(heading - courseToDestination));
         forward(3000); 
       }
-      else if(compass() - courseToDestination < -180){
+      else if(heading - courseToDestination < -180){
         Serial.println("Turn Left H");
-        Serial.println(360 - (-1*(compass() - courseToDestination)));
-        turnLeft(360 - (-1*(compass() - courseToDestination)));
+        Serial.println(360 - (-1*(heading - courseToDestination)));
+        turnLeft(360 - (-1*(heading - courseToDestination)));
         forward(3000);
       }
       delay(6000); //Not doing anything right now???
