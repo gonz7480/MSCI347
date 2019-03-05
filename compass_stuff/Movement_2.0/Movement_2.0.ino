@@ -225,6 +225,10 @@ void loop()
      * AND NEVER GOES FORWARD.
      */
 
+     /* Attempting to get robot to turn exact number of degrees to be on correct
+      * heading.
+      */
+
     //if we are 10 meters or further away from destination
     //go forward 6 seconds between each turn
     if(distanceToDestination >= 10){
