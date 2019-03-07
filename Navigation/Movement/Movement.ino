@@ -1,3 +1,8 @@
+/*  TESTED ON 4 MAR 2019 BY SOPHIA ROSE
+ *  ROBOT ONLY SPUN IN CIRCLES
+ *  CALCULATIONS CORRECT AS FAR AS I CAN TELL
+ */
+
 #include <SoftwareSerial.h>
 #include <Servo.h> 
 #include <TinyGPS++.h>
