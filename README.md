@@ -11,7 +11,6 @@ Arduino Examples:
   - Capstone_MotorTest_SP19: Testing code for the winch motor.
   - PS2Controlv0: Example code for using a PlayStation 2 controller to control servos
                   and an Electronic Speed Controller.
-
                   Copied from TechMonkeyBusiness. http://www.techmonkeybusiness.com/using-a-playstation-2-controller-with-your-arduino-project.html
   - Movement: <Was this an example or fully ours??>
 
