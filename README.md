@@ -2,7 +2,7 @@
 ## Ocean Instrumentation Capstone Project
 ## CSUMB's Spring 2019 MSCI 437 Class
 
-This repository holds all the software for <RoboBuoy>, an autonomous surface-swimming datalogger.
+This repository holds all the software for **RoboBuoy**, an autonomous surface-swimming datalogger.
 
 ### Folder Hierarchy
 Arduino Examples:
@@ -23,11 +23,11 @@ Navigation:
                NeoGPS-master: https://github.com/SlashDevin/NeoGPS
                TinyGPSPlus-master: http://arduiniana.org/libraries/tinygpsplus/
   - Movement: Prototype code using TinyGPS++ library for the autonomous navigation of RoboBuoy.
-              *Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.* https://www.parallax.com/product/boe-bot-robot
+              **Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.** https://www.parallax.com/product/boe-bot-robot
   - Movement_2.0: Second prototype code also using TinyGPS++ library, but uses precise heading changes.
-                  *Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.*
+                  **Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.**
   - Neo_gps_code: Prototype code using NeoGPS library for the autonomous navigation of RoboBuoy.
-                  *Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.*
+                  **Not correctly working as of 4 Mar 2019 when tested on a BoeBot with an Arduino Uno.**
   - ParallaxGPS: Back-up software for navigation using a Parallax GPS unit. The final version of <RoboBuoy>
                  uses an Adafruit Ultimate GPS Breakout v3.
   - Propellers: Initial script for testing that our trusters worked.
