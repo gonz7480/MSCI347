@@ -82,13 +82,13 @@ float compass(){
 }
 
 void forward(int wait){ //moves robot forward
-  LTmtr.writeMicroseconds(1600);
-  RTmtr.writeMicroseconds(1350);
+  LTmtr.writeMicroseconds(1350);
+  RTmtr.writeMicroseconds(1600);
   delay(wait);
 }
 void reverse(int wait) { //moves robot backwards
-  LTmtr.writeMicroseconds(1350);
-  RTmtr.writeMicroseconds(1600);
+  LTmtr.writeMicroseconds(1600);
+  RTmtr.writeMicroseconds(1350);
   delay(wait);
 }
 
@@ -142,9 +142,10 @@ void turnLeft(int degree) { //turns my robot left
   
 }
 
-void stopRobot() { //stops my robot
+void stopRobot(int wait) { //stops my robot
   LTmtr.writeMicroseconds(1500);
   RTmtr.writeMicroseconds(1500);
+  delay(wait);
 }
 
 int courseChangeNeeded = 0;

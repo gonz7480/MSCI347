@@ -196,26 +196,25 @@ void loop()
     else if (courseChangeNeeded >= 315 && courseChangeNeeded < 345){
       Serial.println("Veer slightly to the left.");
       turnLeft(45);
-      forward(6000);
     }
     else if (courseChangeNeeded >= 15 && courseChangeNeeded < 45){
       Serial.println("Veer slightly to the right.");
       turnRight(45);
-      forward(6000);
     }
     else if (courseChangeNeeded >= 255 && courseChangeNeeded < 315){
       Serial.println("Turn to the left.");
       turnLeft(90);
-      forward(6000);
     }
     else if (courseChangeNeeded >= 45 && courseChangeNeeded < 105){
       Serial.println("Turn to the right.");
       turnRight(90);
-      forward(6000);
     }
     else{
       Serial.println("Turn completely around.");
-      reverse(1000);
+      turnRight(90);
+      turnRight(90);
     }
+
+    forward(6000);
   }
 }

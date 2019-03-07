@@ -21,11 +21,87 @@ uint8_t updates = 0; // used to count elapsed seconds
 
 NeoGPS::Location_t des( 36.652874, -121.794330 ); // Orono, ME
 
+
+float compass(){
+  // Get a new sensor event 
+  sensors_event_t event; 
+  mag.getEvent(&event);
+  
+  float Pi = 3.14159;
+  
+  // Calculate the angle of the vector y,x
+  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+  
+  // Normalize to 0-360
+  if (heading < 0)
+  {
+    heading = 360 + heading;
+  }
+//  Serial.print("Compass Heading: ");
+//  Serial.println(heading);
+//  delay(500);
+
+  return heading;
+}
+
+void forward(int wait){ //moves robot forward
+  LTmtr.writeMicroseconds(1600); //gives the wheels their inital postion
+  RTmtr.writeMicroseconds(1350); //gives wheels inital their postion
+  delay(wait);
+}
+void reverse(int wait) { //moves robot backwards
+  LTmtr.writeMicroseconds(1350);
+  RTmtr.writeMicroseconds(1600);
+  delay(wait);
+}
+
+void turnRight(int degree) { //turns my robot 90 degrees right 
+  if(degree == 90){
+    LTmtr.write(160);
+    RTmtr.write(160);
+    delay(950);
+  }
+  else if(degree == 45){
+    LTmtr.write(160);
+    RTmtr.write(160);
+    delay(425);
+  }
+  else{
+    LTmtr.write(160);
+    RTmtr.write(160);
+  }
+  
+}
+void turnLeft(int degree) { //turns my robot left
+  if(degree == 90){
+    LTmtr.write(240);
+    RTmtr.write(240);
+    delay(770);
+  }
+  else if(degree == 45){
+    LTmtr.write(240);
+    RTmtr.write(240);
+    delay(385);
+  }else{
+    LTmtr.write(240);
+    RTmtr.write(240);
+  }
+  
+}
+
+void stopRobot() { //stops my robot
+  LTmtr.writeMicroseconds(1500);
+  RTmtr.writeMicroseconds(1500);
+}
+
+
 void setup()
 {
   Serial.begin(ConsoleBaud);
   gpsPort.begin(GPSBaud);
 
+  RTmtr.attach(7);
+  LTmtr.attach(6);
 }
 
 void loop()
@@ -48,7 +124,7 @@ void loop()
         double courseToDestination   = fix.location.BearingToDegrees( des );
         const __FlashStringHelper *directionToDestination =
                                         compassDir(courseToDestination);
-        int courseChangeNeeded = (int)(360 + courseToDestination - fix.heading()) % 360;
+        int courseChangeNeeded = (int)(360 + courseToDestination - compass()) % 360;
 
         // debug
 //        Serial.print( F("DEBUG: Course2Dest: ") );
@@ -94,21 +170,36 @@ void loop()
           Serial.println( '.' );
 
         } else // suggest a course change
-        if ((courseChangeNeeded >= 345) || (courseChangeNeeded < 15))
+        if ((courseChangeNeeded >= 345) || (courseChangeNeeded < 15)){
           Serial.println( F("Keep on straight ahead!") );
-        else if ((courseChangeNeeded >= 315) && (courseChangeNeeded < 345))
+          forward(6000);
+        }
+        else if ((courseChangeNeeded >= 315) && (courseChangeNeeded < 345)){
           Serial.println( F("Veer slightly to the left.") );
-        else if ((courseChangeNeeded >= 15) && (courseChangeNeeded < 45))
+          turnLeft(45);
+        }
+        else if ((courseChangeNeeded >= 15) && (courseChangeNeeded < 45)){
           Serial.println( F("Veer slightly to the right.") );
-        else if ((courseChangeNeeded >= 255) && (courseChangeNeeded < 315))
+          turnRight(45);
+        }
+        else if ((courseChangeNeeded >= 255) && (courseChangeNeeded < 315)){
           Serial.println( F("Turn to the left.") );
-        else if ((courseChangeNeeded >= 45) && (courseChangeNeeded < 105))
+          turnLeft(90);
+        }
+        else if ((courseChangeNeeded >= 45) && (courseChangeNeeded < 105)){
           Serial.println( F("Turn to the right.") );
-        else
+          turnRight(90);
+        }
+        else{
           Serial.println( F("Turn completely around.") );
+          turnRight(90);
+          turnRight(90);
+        }
       } else {
         Serial.println( F("Waiting for GPS fix...") );
       }
+
+      forward(6000);
     }
   }
 }
