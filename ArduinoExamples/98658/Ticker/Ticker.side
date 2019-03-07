@@ -1,0 +1,18 @@
+Ticker.cpp
+>-fno-exceptions
+>-fno-rtti
+>-ltiny
+>-m32bit-doubles
+>BOARD::ACTIVITYBOARD
+>compiler=C++
+>memtype=cmm main ram compact
+>optimize=-Os
+Adafruit_GFX.cpp
+Adafruit_GFX.h
+Arduino.cpp
+Arduino.h
+Max72xxPanel.cpp
+Max72xxPanel.h
+SPI.cpp
+SPI.h
+glcdfont.c
