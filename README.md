@@ -33,3 +33,6 @@ Navigation:
   - Propellers: Initial script for testing that our trusters worked.
                 Used T100 trusters from Blue Robotics https://www.bluerobotics.com/store/thrusters/t100-t200-thrusters/t100-thruster/
                 and an Afro ESC.
+Safety:
+  -Leak Detector: Code for testing wether or not there is water and what height the water is at
+  -voltage_check_final: Code for checking the voltage of the LiPo batteries
