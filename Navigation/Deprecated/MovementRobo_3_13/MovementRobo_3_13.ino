@@ -93,19 +93,19 @@ void loop() {
     //previous location (gps.course.deg() from TinyGPSPlus). People have noticed inaccuracies in course calculation when speed is less than 5kph.
     //For speeds less than 5kph, I've replaced the TinyGPS function with the angle from the compass.
 
-    
-    float l = gps.location.lat();
-    float m = gps.location.lng();
+
+    //float l = gps.location.lat();
+    //float m = gps.location.lng();
     Serial.println();
     Serial.print("LAT: "); Serial.print(l, 6); Serial.print("  LON: "); Serial.println(m,6);
     Serial.print("CURRENT ANGLE: "); Serial.println(compass());
     Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
-    
+
 
     int courseChangeNeeded = heading - courseToDestination;
 
     if(courseChangeNeeded > -10 && courseChangeNeeded < 10){
-      Serial.print("Turn forward. "); Serial.println(courseChangeNeeded); 
+      Serial.print("Turn forward. "); Serial.println(courseChangeNeeded);
     }
     else if(courseChangeNeeded < -180){
       turnLeft(5);
@@ -122,7 +122,7 @@ void loop() {
     else if(courseChangeNeeded >= -180  && courseChangeNeeded < 0){
       turnRight(5);
       Serial.print("Turn to the right: "); Serial.println(-1 * courseChangeNeeded);
-    } 
+    }
 
     forward(1000);
 
@@ -142,8 +142,8 @@ void loop() {
 
     Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
     Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
-   
-                                                 
+
+
 
     //Angle Directions
 //    if (courseChangeNeeded >= 345 || courseChangeNeeded < 15) {
@@ -225,7 +225,7 @@ void turnLeft(int degree) { //turns my robot left
 
 void turnRight(int degree) { //turns my robot 90 degrees right
   //This equation came from calculating a linear relationship between the previous delay values for 45 and 90 degrees
-  int turnTime = 6.67*degree; 
+  int turnTime = 6.67*degree;
   if(turnTime > 0){
     LTmtr.writeMicroseconds(1700);
     RTmtr.writeMicroseconds(1700);

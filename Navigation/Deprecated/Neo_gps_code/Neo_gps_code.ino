@@ -1,9 +1,9 @@
-#include <Servo.h> 
+#include <Servo.h>
 #include <NeoSWSerial.h>
 #include <NMEAGPS.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
- 
+
 Servo RTmtr;
 Servo LTmtr;
 
@@ -12,7 +12,7 @@ Servo LTmtr;
 
 // The serial connection to the GPS device
 //AltSoftSerial gpsPort; // pins 8 & 9 would be better!
-#define RXPin 10
+#define RXPin 9
 #define TXPin 8
 NeoSWSerial gpsPort(RXPin, TXPin);
 
@@ -23,15 +23,15 @@ NeoGPS::Location_t des( 36.652874, -121.794330 ); // Orono, ME
 
 
 float compass(){
-  // Get a new sensor event 
-  sensors_event_t event; 
+  // Get a new sensor event
+  sensors_event_t event;
   mag.getEvent(&event);
-  
+
   float Pi = 3.14159;
-  
+
   // Calculate the angle of the vector y,x
   float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
-  
+
   // Normalize to 0-360
   if (heading < 0)
   {
@@ -55,7 +55,7 @@ void reverse(int wait) { //moves robot backwards
   delay(wait);
 }
 
-void turnRight(int degree) { //turns my robot 90 degrees right 
+void turnRight(int degree) { //turns my robot 90 degrees right
   if(degree == 90){
     LTmtr.write(160);
     RTmtr.write(160);
@@ -70,7 +70,7 @@ void turnRight(int degree) { //turns my robot 90 degrees right
     LTmtr.write(160);
     RTmtr.write(160);
   }
-  
+
 }
 void turnLeft(int degree) { //turns my robot left
   if(degree == 90){
@@ -86,7 +86,7 @@ void turnLeft(int degree) { //turns my robot left
     LTmtr.write(240);
     RTmtr.write(240);
   }
-  
+
 }
 
 void stopRobot() { //stops my robot
@@ -226,7 +226,7 @@ const char nwCD [] PROGMEM = "NW";
 const char nnwCD[] PROGMEM = "NNW";
 
 const char * const dirStrings[] PROGMEM =
-  { nCD, nneCD, neCD, eneCD, eCD, eseCD, seCD, sseCD, 
+  { nCD, nneCD, neCD, eneCD, eCD, eseCD, seCD, sseCD,
     sCD, sswCD, swCD, wswCD, wCD, wnwCD, nwCD, nnwCD };
 
 const __FlashStringHelper *compassDir( uint16_t bearing ) // degrees CW from N

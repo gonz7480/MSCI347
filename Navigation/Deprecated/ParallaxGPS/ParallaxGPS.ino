@@ -30,18 +30,18 @@ double lon_dd = 0.0; //Store longitude as decimal degrees
  */
 void NMEAparser(String sentence){
   int commas = 0; //counting commas in NMEA sentence
-  
+
   //If 2nd letter in NMEA code is 'R'...
   if(sentence[3] == 'R'){
     for(int i = 5; commas <= 5; i++){ //only search sentence up to the 5th comma
       if(sentence[i] == ','){ //count the commas as they are found
-        commas++;  
+        commas++;
       }
       else{
         //Store navigation receiver warning
         if(commas == 2){
           if(sentence[i] == 'A'){
-            valid = true;  
+            valid = true;
           }
         }
         //Store latitude
@@ -52,7 +52,7 @@ void NMEAparser(String sentence){
           if(sentence[i] == 'S'){ //If in Southern Hemisphere, set latitude to negative
             lat_dd = toDecimalDegrees(lat, true);  //Convert to decimal degrees
           }
-          else{lat_dd = toDecimalDegrees(lat);}  
+          else{lat_dd = toDecimalDegrees(lat);}
         }
         //Store longitude
         if(commas == 5){
@@ -60,12 +60,12 @@ void NMEAparser(String sentence){
         }
         if(commas == 6){
           if(sentence[i] == 'W'){ //If in Western Hemisphere, set longitude to negative
-            lon_dd = toDecimalDegrees(lon, true); 
+            lon_dd = toDecimalDegrees(lon, true);
           }
           else{lon_dd = toDecimalDegrees(lon);}
         }
-      }  
-    }  
+      }
+    }
   }
 }
 
@@ -89,7 +89,7 @@ float getAngle(float angle, double currentLat, double currentLon, double endLat,
         return angle + 180.0 + theta;
       }
       else{ //If current position and destination are at the same longitude...
-        return angle + 180.0;  
+        return angle + 180.0;
       }
     }
     else if(deltaLat < 0){
@@ -100,7 +100,7 @@ float getAngle(float angle, double currentLat, double currentLon, double endLat,
         return angle + theta;
       }
       else{ //If current position and destination are at the same longitude...
-        return angle;  
+        return angle;
       }
     }
 }
