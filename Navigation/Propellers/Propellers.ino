@@ -1,18 +1,31 @@
 #include <Servo.h>
 
-#define MotorPin 5
+#define MotorRPin 5
+#define MotorLPin 3
 
-Servo motor;
+Servo motorR;
+Servo motorL;
 
 void setup() {
-  motor.attach(MotorPin);
+  motorR.attach(MotorRPin);
+  motorL.attach(MotorLPin);
 
   //motors need a stop command before it can move
-  motor.writeMicroseconds(1500); 
+  motorR.writeMicroseconds(1500); 
+  motorL.writeMicroseconds(1500);
   delay(3000);
 }
 
 void loop() {
-  motor.writeMicroseconds(1650);
-  delay(3000);
+  motorL.writeMicroseconds(1500);
+  motorR.writeMicroseconds(1600);
+  delay(2000);
+
+  motorL.writeMicroseconds(1400);
+  motorR.writeMicroseconds(1500);
+  delay(2000);
+
+  motorL.writeMicroseconds(1400);
+  motorR.writeMicroseconds(1600);
+  delay(2000);
 }
