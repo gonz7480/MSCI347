@@ -48,6 +48,9 @@ float distanceToDestination;
 float courseToDestination;
 int courseChangeNeeded;
 
+//boolean used with getHome()
+bool launch = true;
+
 
 // Function to read the magnetometer and convert output to degrees
 float compass() { //Get a new sensor event
@@ -87,23 +90,39 @@ char courseChange(){
 /* Function to define how the thrusters should move/turn
  * int mod: an integer that modifies the speed of the thrusters. Must be greater than 25 if using BlueRobotics T100 Thrusters
  */
-void moveMotor(int mod, char dir){
+void moveMotor(int mod, char dir, int wait = 1000){
   switch(dir){
     case 'L':
         RTmtr.writeMicroseconds(1500 - mod);
         LTmtr.writeMicroseconds(1500);
-        delay(1000);
+        delay(500);
         break;
     case 'R':
+        //while(mod > 0){
         RTmtr.writeMicroseconds(1500);
         LTmtr.writeMicroseconds(1500 + mod);
-        delay(1000);
+        delay(500);
         break;
     default:
         RTmtr.writeMicroseconds(1500 - mod);
         LTmtr.writeMicroseconds(1500 + mod);
-        delay(1000);
+        delay(wait);
   }
+}
+
+//Function to save the GPS coordinates of where RoboBuoy is launched
+void getHome(){
+  if(launch){
+    home_LAT = gps.location.lat();
+    home_LNG = gps.location.lng();  
+  }
+  launch = false;  
+}
+
+//Function to set destination to launching point for retrieval
+void goHome(){
+  des_LAT = home_LAT;
+  des_LNG = home_LNG;  
 }
 
 void setup() {
@@ -124,9 +143,6 @@ void setup() {
   LTmtr.writeMicroseconds(1500);
   delay(2000);
 
-  while (ss.available() > 0) {
-    if (gps.encode(ss.read()));
-  }
 }
 
 void loop() {
@@ -135,8 +151,11 @@ void loop() {
     if (gps.encode(ss.read()));
     //Serial.println("STUCK");
   }
-  lastUpdateTime = millis();
-  Serial.println();
+
+  getHome();
+  
+  //lastUpdateTime = millis();
+  //Serial.println();
 
   curr_LAT = 36.653624; //gps.location.lat();
   curr_LNG = -121.794129; //gps.location.lng();
@@ -152,19 +171,23 @@ void loop() {
   Serial.print("CURRENT ANGLE: "); Serial.println(heading);
   Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
 
-  //calculate the difference in angle between current heading and a heading that would lead RoboBuoy straight to the destination
+  //calculate the difference in angle between current heading 
+  //and a heading that would lead RoboBuoy straight to the destination
   courseChangeNeeded = heading - courseToDestination;
 
-  if (distanceToDestination <= 1) { //If less than 1 meter away from destination, stay put
+  //If less than 1 meter away from destination, stay put
+  if (distanceToDestination <= 1) { 
     moveMotor(25, courseChange());
     Serial.print("crawl ");
     Serial.println(courseChange());
-  }else if(distanceToDestination <= 2){ //If less than 2 meters away, go slow
+  }//If less than 2 meters away, go slow
+  else if(distanceToDestination <= 2){ 
     moveMotor(50, courseChange());
     Serial.print("slow ");
     Serial.println(courseChange());
     moveMotor(50, 'N');
-  }else if(distanceToDestination <= 10){ //If less than 10 meters away, go fairly fast
+  }//If less than 10 meters away, go fairly fast
+  else if(distanceToDestination <= 10){ 
     moveMotor(150, courseChange());
     Serial.print("medium ");
     Serial.println(courseChange());
@@ -173,7 +196,7 @@ void loop() {
     moveMotor(200, courseChange());
     Serial.print("fast ");
     Serial.println(courseChange());
-    moveMotor(200, 'N');
+    moveMotor(200, 'N', 5000);
   }
 
   Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
