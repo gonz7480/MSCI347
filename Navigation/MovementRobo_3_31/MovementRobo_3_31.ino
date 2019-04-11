@@ -38,8 +38,8 @@ unsigned long lastUpdateTime = 0;  //Set last updated time to zero
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
 
 //destination lat and lon
-float des_LAT = 36.653596;
-float des_LNG = -121.793941;
+float des_LAT;
+float des_LNG;
 
 //lat and lon of launching point
 float home_LAT;
@@ -56,7 +56,6 @@ int courseChangeNeeded;
 
 //boolean used with getHome()
 bool launch = true;
-
 
 // Function to read the magnetometer and convert output to degrees
 float compass() { //Get a new sensor event
@@ -90,7 +89,6 @@ char courseChange(){
     return 'R';
   }
   else{return 'N';}
-
 }
 
 /* Function to define how the thrusters should move/turn
@@ -120,19 +118,28 @@ void moveMotor(int mod, char dir, int wait = 1000){
   }
 }
 
+/* Function to set destination coordinates
+ * float lat: latitude
+ * float lon: longitude
+*/
+void setDest(float lat, float lon){
+  des_LAT = lat;
+  des_LNG = lon;
+}
+
 //Function to save the GPS coordinates of where RoboBuoy is launched
 void getHome(){
   if(launch){
     home_LAT = gps.location.lat();
-    home_LNG = gps.location.lng();  
+    home_LNG = gps.location.lng();
   }
-  launch = false;  
+  launch = false;
 }
 
 //Function to set destination to launching point for retrieval
 void goHome(){
   des_LAT = home_LAT;
-  des_LNG = home_LNG;  
+  des_LNG = home_LNG;
 }
 
 void setup() {
@@ -140,6 +147,8 @@ void setup() {
   ss.begin(GPSBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
+
+  setDest(36.653596, -121.793941)
 
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
@@ -151,7 +160,6 @@ void setup() {
   RTmtr.writeMicroseconds(1500);
   LTmtr.writeMicroseconds(1500);
   delay(2000);
-
 }
 
 void loop() {
@@ -160,7 +168,7 @@ void loop() {
   while (ss.available() > 0) {
     if (gps.encode(ss.read()));
   }
-  
+
   //Save initial GPS location
   if(gps.location.isValid()){getHome();}
 
@@ -185,20 +193,20 @@ void loop() {
     Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
   }
 
-  //calculate the difference in angle between current heading 
+  //calculate the difference in angle between current heading
   //and a heading that would lead RoboBuoy straight to the destination
   courseChangeNeeded = heading - courseToDestination;
 
   //If less than 1 meter away from destination, stay put
-  if (distanceToDestination <= 1) { 
+  if (distanceToDestination <= 1) {
     moveMotor(25, courseChange());
-    
+
     if(debug){
       Serial.print("crawl ");
       Serial.println(courseChange());
     }
   }//If less than 2 meters away, go slow
-  else if(distanceToDestination <= 2){ 
+  else if(distanceToDestination <= 2){
     moveMotor(50, courseChange());
     moveMotor(50, 'N');
 
@@ -206,9 +214,8 @@ void loop() {
       Serial.print("slow ");
       Serial.println(courseChange());
     }
-    
   }//If less than 10 meters away, go fairly fast
-  else if(distanceToDestination <= 10){ 
+  else if(distanceToDestination <= 10){
     moveMotor(150, courseChange());
     moveMotor(150, 'N');
 
