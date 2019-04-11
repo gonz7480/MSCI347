@@ -1,5 +1,8 @@
-/* GIVE CREDIT TO ORIGINAL SOURCE
-*/
+/* Compass code based on the example in the Adafuit_LSM303_U library.
+ * Select GPS lines are from the example in the TinyGPS++ library.
+ * All movement functions were written primarily by:
+ *            Sophia Rose, Andrew Beardshear, Andrew Reyna
+ */
 
 //Libraries
 #include <SoftwareSerial.h> //TX RX library
@@ -8,6 +11,9 @@
 #include <Wire.h>  //I2C library
 #include <Adafruit_Sensor.h>  //Sensor library
 #include <Adafruit_LSM303_U.h>  //Compass library
+
+//Toggle this boolean to turn on print statements for debuggings
+bool debug = true;
 
 //Defined pins
 #define RXPin 5
@@ -88,7 +94,11 @@ char courseChange(){
 }
 
 /* Function to define how the thrusters should move/turn
- * int mod: an integer that modifies the speed of the thrusters. Must be greater than 25 if using BlueRobotics T100 Thrusters
+ * int mod: an integer that modifies the speed of the thrusters.
+ *          Must be greater than 25 if using BlueRobotics T100 Thrusters
+ * char dir: a character indicating the direction to turn
+ *           'L' for left, 'R' for right
+ * int wait: an integer to set the delay when not turning
  */
 void moveMotor(int mod, char dir, int wait = 1000){
   switch(dir){
@@ -128,7 +138,6 @@ void goHome(){
 void setup() {
   Serial.begin(ConsoleBaud);  //Begin connection with the serial monitor
   ss.begin(GPSBaud);  //Begin software serial connection with GPS
-  Serial.print("Testing");
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
 
@@ -138,7 +147,7 @@ void setup() {
     while (1);
   }
 
-  //T100 trusters need 
+  //T100 trusters need a stop command to initialize
   RTmtr.writeMicroseconds(1500);
   LTmtr.writeMicroseconds(1500);
   delay(2000);
@@ -146,30 +155,35 @@ void setup() {
 }
 
 void loop() {
-  //If any characters have arrived from the GPS, send them to the TinyGPS++ object
+  //If any characters have arrived from the GPS,
+  //send them to the TinyGPS++ object
   while (ss.available() > 0) {
     if (gps.encode(ss.read()));
-    //Serial.println("STUCK");
   }
-
-  getHome();
   
-  //lastUpdateTime = millis();
-  //Serial.println();
+  //Save initial GPS location
+  if(gps.location.isValid()){getHome();}
 
-  curr_LAT = 36.653624; //gps.location.lat();
-  curr_LNG = -121.794129; //gps.location.lng();
+  //Save current lat, lon, and heading
+  curr_LAT = gps.location.lat();
+  curr_LNG = gps.location.lng();
   heading = compass();
 
 
   //Establish our current status
+  //These two lines are from the TinyGPS++ example
   distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
   courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, des_LAT, des_LNG);
 
-  Serial.println();
-  Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG,6);
-  Serial.print("CURRENT ANGLE: "); Serial.println(heading);
-  Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
+  if(debug){
+    Serial.println();
+    Serial.println(gps.location.isValid());
+    Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG,6);
+    Serial.print("CURRENT ANGLE: "); Serial.println(heading);
+    Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
+    Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
+    Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
+  }
 
   //calculate the difference in angle between current heading 
   //and a heading that would lead RoboBuoy straight to the destination
@@ -178,46 +192,39 @@ void loop() {
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) { 
     moveMotor(25, courseChange());
-    Serial.print("crawl ");
-    Serial.println(courseChange());
+    
+    if(debug){
+      Serial.print("crawl ");
+      Serial.println(courseChange());
+    }
   }//If less than 2 meters away, go slow
   else if(distanceToDestination <= 2){ 
     moveMotor(50, courseChange());
-    Serial.print("slow ");
-    Serial.println(courseChange());
     moveMotor(50, 'N');
+
+    if(debug){
+      Serial.print("slow ");
+      Serial.println(courseChange());
+    }
+    
   }//If less than 10 meters away, go fairly fast
   else if(distanceToDestination <= 10){ 
     moveMotor(150, courseChange());
-    Serial.print("medium ");
-    Serial.println(courseChange());
     moveMotor(150, 'N');
+
+    if(debug){
+      Serial.print("medium ");
+      Serial.println(courseChange());
+    }
   }else{ //Else, go fast
     moveMotor(200, courseChange());
-    Serial.print("fast ");
-    Serial.println(courseChange());
     moveMotor(200, 'N', 5000);
+
+    if(debug){
+      Serial.print("fast ");
+      Serial.println(courseChange());
+    }
+
   }
 
-  Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
-  Serial.println(" meters to go."); //Serial.print("INSTRUCTION: ");
-
 }
-
-/* //deprecated movement functions
-void stopRobot() {  // function to stop moving for a period of time
-  LTmtr.writeMicroseconds(1500);  // both wheels stop
-  RTmtr.writeMicroseconds(1500);
-}
-
-void forward(int duration) {  //function to go straight full speed for designated time
-  LTmtr.writeMicroseconds(1700);  // left wheel counterclockwise
-  RTmtr.writeMicroseconds(1300);  // right wheel clockwise
-  delay(duration);
-}
-
-void reverse(int duration) {  // function to go backwards full speed for designated time
-  LTmtr.writeMicroseconds(1300);  // left wheel clockwise
-  RTmtr.writeMicroseconds(1700);  // right wheel counterclockwise
-  delay(duration);
-}*/
