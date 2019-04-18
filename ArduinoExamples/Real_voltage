@@ -1,0 +1,16 @@
+float LipoRatio = 4.144670051;
+void setup() {
+Serial.begin(9600);
+}
+
+void loop() {
+  int sensorvalue = analogRead(A8);
+
+  float voltage = (sensorvalue*.00488759);
+  float LipoVoltage = (voltage * LipoRatio);
+  Serial.println(voltage);
+  Serial.println(sensorvalue);
+  Serial.println(LipoVoltage);
+  delay(500);
+  
+}
