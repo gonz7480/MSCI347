@@ -14,8 +14,8 @@ bool debug = false;
 #define TXGPS 4
 
 //Winch connection pins
-#define RXWinch 6
-#define TXWinch 7
+const byte RXWinch = 6;
+const byte TXWinch = 7;
 
 //Baud rates
 #define SerialBaud 9600
@@ -28,7 +28,7 @@ Servo RTmtr;
 Servo LTmtr;
 
 SoftwareSerial ss(RXGPS, TXGPS);  //The serial connection to the GPS device
-SoftwareSerial winch(RXWinch, TXWinch);
+SoftwareSerial winch(RXWinch, TXWinch); //Serial conncetion with winch Arduino
 
 TinyGPSPlus gps;  //The TinyGPS++ object
 unsigned long lastUpdateTime = 0;  //Set last updated time to zero
@@ -240,7 +240,7 @@ void loop() {
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
-    winch.println("x");
+    winch.println('x');
     
     moveMotor(25, courseChange());
 
