@@ -7,15 +7,19 @@
 #include <Adafruit_LSM303_U.h>  //Compass library
 
 //Toggle this boolean to turn on print statements for debuggings
-bool debug = true;
+bool debug = false;
 
-//Defined pins
-#define RXPin 5
-#define TXPin 4
+//GPS connection pins
+#define RXGPS 5
+#define TXGPS 4
+
+//Winch connection pins
+#define RXWinch 6
+#define TXWinch 7
 
 //Baud rates
-#define GPSBaud 9600
-#define ConsoleBaud 115200
+#define SerialBaud 9600
+#define DebugBaud 115200
 
 #define Pi 3.14159
 
@@ -23,7 +27,8 @@ bool debug = true;
 Servo RTmtr;
 Servo LTmtr;
 
-SoftwareSerial ss(RXPin, TXPin);  //The serial connection to the GPS device
+SoftwareSerial ss(RXGPS, TXGPS);  //The serial connection to the GPS device
+SoftwareSerial winch(RXWinch, TXWinch);
 
 TinyGPSPlus gps;  //The TinyGPS++ object
 unsigned long lastUpdateTime = 0;  //Set last updated time to zero
@@ -85,6 +90,7 @@ char courseChange(){
   else{return 'N';}
 }
 
+// Function to stop the motors
 void stop(){
    RTmtr.writeMicroseconds(1500);
    LTmtr.writeMicroseconds(1500);
@@ -145,9 +151,10 @@ void goHome(){
 }
 
 float LipoRatio = 4.144670051;
+
 void setup() {
-  Serial.begin(ConsoleBaud);  //Begin connection with the serial monitor
-  ss.begin(GPSBaud);  //Begin software serial connection with GPS
+  Serial.begin(DebugBaud);  //Begin connection with the serial monitor
+  ss.begin(SerialBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
 
@@ -184,12 +191,17 @@ void loop() {
  * All movement functions were written primarily by:
  *            Sophia Rose, Andrew Beardshear, Andrew Reyna
  */
+  
   //Check if manual override has been initiated
   //If yes, use manual override
   //break;
 
   //Check if signal from Winch has been received
   //If yes, goHome();
+  winch.listen();
+  if(winch.available()){
+    goHome();  
+  }
   
   //If any characters have arrived from the GPS,
   //send them to the TinyGPS++ object
@@ -265,4 +277,3 @@ void loop() {
   }
 
 }
-
