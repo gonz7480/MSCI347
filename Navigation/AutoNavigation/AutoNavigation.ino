@@ -13,7 +13,7 @@
 #include <Adafruit_LSM303_U.h>  //Compass library
 
 //Toggle this boolean to turn on print statements for debuggings
-bool debug = true;
+bool debug = false;
 
 //Defined pins
 #define RXPin 5
