@@ -240,6 +240,7 @@ void loop() {
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
+    winch.println("x");
     
     moveMotor(25, courseChange());
 
