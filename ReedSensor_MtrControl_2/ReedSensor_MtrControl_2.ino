@@ -50,12 +50,12 @@ void loop()
   if (StatoSwitch == HIGH) 
   {
     WenchMtr.detach();
+
+    //Once observatory is up, send "home" signal to navigation
+    navigation.println('o');
   }
   else
   {
     up();
-
-    //Once observatory is up, send "home" signal to navigation
-    navigation.println('o');
   }
 }
