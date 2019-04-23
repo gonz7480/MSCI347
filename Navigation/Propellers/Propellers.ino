@@ -17,15 +17,17 @@ void setup() {
 }
 
 void loop() {
-  motorL.writeMicroseconds(1500);
   motorR.writeMicroseconds(1600);
-  delay(2000);
-
-  motorL.writeMicroseconds(1400);
-  motorR.writeMicroseconds(1500);
-  delay(2000);
-
-  motorL.writeMicroseconds(1400);
-  motorR.writeMicroseconds(1600);
-  delay(2000);
+  
+//  motorL.writeMicroseconds(1500);
+//  motorR.writeMicroseconds(1600);
+//  delay(2000);
+//
+//  motorL.writeMicroseconds(1400);
+//  motorR.writeMicroseconds(1500);
+//  delay(2000);
+//
+//  motorL.writeMicroseconds(1400);
+//  motorR.writeMicroseconds(1600);
+//  delay(2000);
 }
