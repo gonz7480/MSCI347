@@ -2,7 +2,6 @@
 #include <SoftwareSerial.h> //TX RX library
 #include <Servo.h>  //Servo library
 #include <TinyGPS++.h>  //GPS library
-#include <Wire.h>  //I2C library
 #include <Adafruit_Sensor.h>  //Sensor library
 #include <Adafruit_LSM303_U.h>  //Compass library
 
@@ -10,8 +9,8 @@
 bool debug = false;
 
 //destination lat and lon
-float des_LAT = 36.653596;
-float des_LNG = -121.793941;
+float des_LAT = 36.601967;
+float des_LNG = -121.886657;
 
 //GPS connection pins
 const byte RXGPS 5
@@ -208,7 +207,7 @@ void loop() {
   }
 
   //Save initial GPS location
-  if(gps.location.isValid()){getHome();}
+  if(gps.location.isValid() && launch == true){getHome();}
 
   //Save current lat, lon, and heading
   curr_LAT = gps.location.lat();
@@ -243,7 +242,7 @@ void loop() {
     moveMotor(25, courseChange());
 
     if(debug){
-      Serial.print("crawl ");
+      Serial.print("crawl");
       Serial.println(courseChange());
     }
   }//If less than 2 meters away, go slow
