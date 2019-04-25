@@ -14,12 +14,15 @@ float des_LAT = 36.653596;
 float des_LNG = -121.793941;
 
 //GPS connection pins
-#define RXGPS 5
-#define TXGPS 4
+const byte RXGPS 5
+const byte TXGPS 4
 
 //Winch connection pins
 const byte RXWinch = 6;
 const byte TXWinch = 7;
+
+//Reed switch pin (master shut-off)
+const int REED_PIN = 2;
 
 //Baud rates
 #define SerialBaud 9600
@@ -149,6 +152,8 @@ void setup() {
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
 
+  pinMode(REED_PIN, INPUT_PULLUP);
+
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
     Serial.println("Oops, no Compass detected. Check your wiring!");
@@ -163,6 +168,10 @@ void setup() {
 
 
 void loop() {
+  if(digitalRead(REED_PIN) == LOW){
+    stop();
+  }
+
   int sensorvalue = analogRead(A8); //read battery
 
   float voltage = (sensorvalue*.00488759);
