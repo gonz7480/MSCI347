@@ -58,13 +58,11 @@ const int leakDetectPin = 7;  // use this digital I/O pin to monitor the leak de
 char driveMode = 'S'; // Stores the propulsion control mode code (see below); Initialize to 'S'.
                       // S = Stop. All thrusters set to zero speed.
                       // M = Manual control via joystick
-                      // N = Navigating to destination under autopilot
-                      // K = Keeping station over the dive site
-char winchMode = 'T'; // Stores status of benthic obseratory winch. Codes below:
-                      // T = Topside.Observatory is out of the water ,and winch is stopped.
+                      // A = Navigating to destination under autopilot
+char winchMode = 'H'; // Stores status of benthic obseratory winch. Codes below:
                       // D = Descending. Einch is paying out line.
-                      // B = On Bottom, and winch is stopped
-                      // A = Ascending
+                      // H = Stop
+                      // U = Ascending
 
 int voltageRaw = 1024;  // raw A/D counts; initialize to invalid 1024 to detect problems
 char voltageArray[5];  // stores the ascii characters representing voltage
@@ -227,6 +225,25 @@ void autopilot(){
   }
 }
 
+//Function for manual navigation
+void manual(){
+  if(driveMode == 'R'){
+    right(50, 300);
+  }
+  if(driveMode == 'L'){
+    left(50, 300);
+  }
+  if(driveMode == 'F'){
+    forward(50);
+  }
+  if(driveMode == 'B'){
+    backward(50);
+  }
+  if(driveMode == 'S'){
+    stop();
+  }
+}
+
 //Function to save the GPS coordinates of where RoboBuoy is launched
 void getHome(){
   if(launch){
@@ -373,20 +390,23 @@ void loop() {
     Udp.read(commandBuffer, UDP_TX_PACKET_MAX_SIZE);  // Read the packet into commandBuffer
 
     // parse command buffer
-    driveMode = commandBuffer[0];
-    winchMode = commandBuffer[1];
+    mode = commandBuffer[0];
+    driveMode = commandBuffer[1];
+    winchMode = commandBuffer[2];
 
     // act on commands. Could use case/switch here to streamline program a bit.
-    if (driveMode == 'M') {
+    if (mode == 'M') {
+      manual();
       // manual flight mode; follow joystick commands
-      Serial.print("M");
-    } else if (driveMode == 'N') {
+      //Serial.print("M");
+    } else if (mode == 'A') {
       autopilot();
       // navigate by autopilot to target waypoint
-      Serial.println("N");
+      //Serial.println("A");
     } else {
-      driveMode == 'S'; // stop all motors if receive S command or don't receive any valid command.
-      Serial.print("S");
+      mode == 'S'; // stop all motors if receive S command or don't receive any valid command.
+      stop();
+      //Serial.print("S");
     }
 
 
