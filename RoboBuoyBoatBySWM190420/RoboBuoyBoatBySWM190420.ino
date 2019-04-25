@@ -80,6 +80,7 @@ const byte TXGPS = 4;
 const byte RXWinch = 6;
 const byte TXWinch = 7;
 
+//Reed switch pin (master shut-off)
 const int REED_PIN = 2;
 
 //Baud rates
@@ -301,6 +302,10 @@ void setup() {
 
 void loop() {
 
+  if(digitalRead(REED_PIN) == LOW){
+    stop();
+  }
+
   // snapshot the current time
   unsigned long currentMillis = millis();
 
@@ -323,10 +328,6 @@ void loop() {
 
     if (LipoVoltage < 14.3){
       //send signal to shore
-      stop();
-    }
-
-    if(digitalRead(REED_PIN) == LOW){
       stop();
     }
 
