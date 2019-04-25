@@ -19,12 +19,15 @@
 // include libraries to make it easier to use Ethernet and UDP routines.
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-
 #include <TinyGPS++.h>  //GPS library
 #include <Adafruit_Sensor.h>  //Sensor library
 #include <Adafruit_LSM303_U.h>  //Compass library
 #include <SoftwareSerial.h> //TX RX library
 #include <Servo.h>  //Servo library
+
+//destination lat and lon
+float des_LAT = 36.653596;
+float des_LNG = -121.793941;
 
 // Set up network info for the Arduino Ethernet Shield in the SHORE station
 byte macShore[] = { 0x90, 0xA2, 0xDA, 0x0D, 0xB2, 0xC8 };  // mac address of shore Ethernet shield
@@ -97,10 +100,6 @@ unsigned long lastUpdateTime = 0;  //Set last updated time to zero
 
 //Compass object
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
-
-//destination lat and lon
-float des_LAT;
-float des_LNG;
 
 //lat and lon of launching point
 float home_LAT;
@@ -205,15 +204,6 @@ void moveMotor(int mod, char dir, int wait = 1000){
   }
 }
 
-/* Function to set destination coordinates
- * float lat: latitude
- * float lon: longitude
-*/
-void setDest(float lat, float lon){
-  des_LAT = lat;
-  des_LNG = lon;
-}
-
 //Function for autopilot navigation
 //Changes the speed of the motors based on distance from destination
 void autopilot(){
@@ -275,8 +265,6 @@ void setup() {
   ss.begin(SerialBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
-
-  setDest(36.653596, -121.793941);
 
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
