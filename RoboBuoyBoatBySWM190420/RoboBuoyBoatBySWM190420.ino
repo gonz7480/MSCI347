@@ -80,6 +80,8 @@ const byte TXGPS = 4;
 const byte RXWinch = 6;
 const byte TXWinch = 7;
 
+const int REED_PIN = 2;
+
 //Baud rates
 #define SerialBaud 9600
 //#define DebugBaud 115200
@@ -265,6 +267,8 @@ void setup() {
   pinMode(A1, INPUT);  // make sure battery voltage measuring pin is set to be an input.
   digitalWrite(A1, LOW); // make sure pullup resistor on the analog input pin is disabled.
 
+  pinMode(REED_PIN, INPUT_PULLUP);
+
   // open serial communication with computer and wait for port to open
   Serial.begin(115200);
   while(!Serial);  // Wait for serial port to connect. Needed for native USB port only.
@@ -319,6 +323,10 @@ void loop() {
 
     if (LipoVoltage < 14.3){
       //send signal to shore
+      stop();
+    }
+
+    if(digitalRead(REED_PIN) == LOW){
       stop();
     }
 
