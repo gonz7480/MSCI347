@@ -72,8 +72,8 @@ int heading = 361;  // direction in which vessel is pointing. Initialize to inva
 
 
 //GPS connection pins
-#define RXGPS 5
-#define TXGPS 4
+const byte RXGPS = 5;
+const byte TXGPS = 4;
 
 //Winch connection pins
 const byte RXWinch = 6;
@@ -81,7 +81,7 @@ const byte TXWinch = 7;
 
 //Baud rates
 #define SerialBaud 9600
-#define DebugBaud 115200
+//#define DebugBaud 115200
 
 #define Pi 3.14159
 
@@ -116,6 +116,9 @@ int courseChangeNeeded;
 
 //boolean used with getHome()
 bool launch = true;
+
+//constant for checking LiPo batter life
+float LipoRatio = 4.144670051;
 
 // Function to read the magnetometer and convert output to degrees
 float compass() { //Get a new sensor event
@@ -211,6 +214,8 @@ void setDest(float lat, float lon){
   des_LNG = lon;
 }
 
+//Function for autopilot navigation
+//Changes the speed of the motors based on distance from destination
 void autopilot(){
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) {
@@ -218,38 +223,17 @@ void autopilot(){
     winch.println('x');
 
     moveMotor(25, courseChange());
-
-//    if(debug){
-//      Serial.print("crawl ");
-//      Serial.println(courseChange());
-//    }
   }//If less than 2 meters away, go slow
   else if(distanceToDestination <= 2){
     moveMotor(50, courseChange());
     moveMotor(50, 'N');
-
-//    if(debug){
-//      Serial.print("slow ");
-//      Serial.println(courseChange());
-//    }
   }//If less than 10 meters away, go fairly fast
   else if(distanceToDestination <= 10){
     moveMotor(150, courseChange());
     moveMotor(150, 'N');
-
-//    if(debug){
-//      Serial.print("medium ");
-//      Serial.println(courseChange());
-//    }
   }else{ //Else, go fast
     moveMotor(200, courseChange());
     moveMotor(200, 'N', 5000);
-
-//    if(debug){
-//      Serial.print("fast ");
-//      Serial.println(courseChange());
-//    }
-
   }
 }
 
@@ -267,9 +251,6 @@ void goHome(){
   des_LAT = home_LAT;
   des_LNG = home_LNG;
 }
-
-float LipoRatio = 4.144670051;
-
 
 void setup() {
 
@@ -290,7 +271,7 @@ void setup() {
   // Start UDP
   Udp.begin(localPortBoat);
 
-  Serial.begin(DebugBaud);  //Begin connection with the serial monitor
+  //Serial.begin(DebugBaud);  //Begin connection with the serial monitor
   ss.begin(SerialBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
@@ -299,7 +280,7 @@ void setup() {
 
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
-    Serial.println("Oops, no Compass detected. Check your wiring!");
+    //Serial.println("Oops, no Compass detected. Check your wiring!");
     while (1);
   }
 
@@ -333,7 +314,14 @@ void loop() {
 
     if (LipoVoltage < 14.3){
       //send signal to shore
-      //stop();
+      stop();
+    }
+
+    //Check if signal from Winch has been received
+    //If yes, goHome();
+    winch.listen();
+    if(winch.available()){
+      goHome();
     }
 
     //If any characters have arrived from the GPS,
@@ -343,7 +331,11 @@ void loop() {
     }
 
     //Save initial GPS location
-    if(gps.location.isValid() && launch == true){getHome();}
+    if(gps.location.isValid() && gps.satellites.value() > 3 && launch == true){
+      getHome();
+    }else if(launch == true){
+      break;
+    }
 
     //Save current lat, lon, and heading
     curr_LAT = gps.location.lat();
