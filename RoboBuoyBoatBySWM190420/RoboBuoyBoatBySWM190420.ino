@@ -212,6 +212,7 @@ void autopilot(){
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
     winch.println('x');
+    winchMode = 'D'
 
     moveMotor(25, courseChange());
   }//If less than 2 meters away, go slow
@@ -328,6 +329,7 @@ void loop() {
 
     if (LipoVoltage < 14.3){
       //send signal to shore
+      mode = 'S';
       stop();
     }
 
@@ -335,6 +337,7 @@ void loop() {
     //If yes, goHome();
     winch.listen();
     if(winch.available()){
+      winchMode = 'H';
       goHome();
     }
 
