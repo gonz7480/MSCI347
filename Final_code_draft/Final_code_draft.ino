@@ -9,6 +9,10 @@
 //Toggle this boolean to turn on print statements for debuggings
 bool debug = false;
 
+//destination lat and lon
+float des_LAT = 36.653596;
+float des_LNG = -121.793941;
+
 //GPS connection pins
 #define RXGPS 5
 #define TXGPS 4
@@ -35,10 +39,6 @@ unsigned long lastUpdateTime = 0;  //Set last updated time to zero
 
 //Compass object
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
-
-//destination lat and lon
-float des_LAT;
-float des_LNG;
 
 //lat and lon of launching point
 float home_LAT;
@@ -126,15 +126,6 @@ void moveMotor(int mod, char dir, int wait = 1000){
 
 }
 
-/* Function to set destination coordinates
- * float lat: latitude
- * float lon: longitude
-*/
-void setDest(float lat, float lon){
-  des_LAT = lat;
-  des_LNG = lon;
-}
-
 //Function to save the GPS coordinates of where RoboBuoy is launched
 void getHome(){
   if(launch){
@@ -157,8 +148,6 @@ void setup() {
   ss.begin(SerialBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3);
-
-  setDest(36.653596, -121.793941);
 
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
