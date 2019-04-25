@@ -26,8 +26,8 @@
 #include <Servo.h>  //Servo library
 
 //destination lat and lon
-float des_LAT = 36.601967;
-float des_LNG = -121.886657;
+float des_LAT = 36.60337222;
+float des_LNG = -121.88472222;
 
 // Set up network info for the Arduino Ethernet Shield in the SHORE station
 byte macShore[] = { 0x90, 0xA2, 0xDA, 0x0D, 0xB2, 0xC8 };  // mac address of shore Ethernet shield

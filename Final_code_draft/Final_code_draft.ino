@@ -9,8 +9,8 @@
 bool debug = false;
 
 //destination lat and lon
-float des_LAT = 36.601967;
-float des_LNG = -121.886657;
+float des_LAT = 36.60337222;
+float des_LNG = -121.88472222;
 
 //GPS connection pins
 const byte RXGPS 5
