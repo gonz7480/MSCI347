@@ -123,7 +123,7 @@ void moveMotor(int mod, char dir, int wait = 1000){
         LTmtr.writeMicroseconds(1500 + mod);
         delay(wait);
   }
-  
+
 }
 
 /* Function to set destination coordinates
@@ -174,7 +174,7 @@ void setup() {
 
 
 void loop() {
-  int sensorvalue = analogRead(A8);
+  int sensorvalue = analogRead(A8); //read battery
 
   float voltage = (sensorvalue*.00488759);
   float LipoVoltage = (voltage * LipoRatio);
@@ -191,7 +191,7 @@ void loop() {
  * All movement functions were written primarily by:
  *            Sophia Rose, Andrew Beardshear, Andrew Reyna
  */
-  
+
   //Check if manual override has been initiated
   //If yes, use manual override
   //break;
@@ -200,9 +200,9 @@ void loop() {
   //If yes, goHome();
   winch.listen();
   if(winch.available()){
-    goHome();  
+    goHome();
   }
-  
+
   //If any characters have arrived from the GPS,
   //send them to the TinyGPS++ object
   while (ss.available() > 0) {
@@ -241,7 +241,7 @@ void loop() {
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
     winch.println('x');
-    
+
     moveMotor(25, courseChange());
 
     if(debug){
