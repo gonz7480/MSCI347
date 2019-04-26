@@ -38,3 +38,6 @@ Safety:
   - Leak Detector: Code for testing wether or not there is water and what height the water is at
   - voltage_check_final: Code for checking the voltage of the LiPo batteries
   - ReedSwitch: code used to manually turn off the motors
+
+Test_Options:
+  - AutoNavigationwReed: This allows for a basic GPS navigation launch with the reed interrupt included to stop the motors at any point
