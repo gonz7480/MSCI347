@@ -49,6 +49,7 @@ int voltage = 0;  // used to measure and send battery voltage (raw A/D counts)
 int leak = 0;  // used to warn human operator that water has been detected inside vehicle (if leak = 1);
 int range = 65000;
 int bearing = 360;
+char keyboard = 'S';
 
 // command variables
 char modeCommand = 'S';  // still need function to update this based on joystick commands
@@ -150,14 +151,14 @@ void loop() {
   //  return; 
   //  }else{
       ps2x.read_gamepad(false, vibrate); //read controller and set large motor to spin at 'vibrate' speed
-    
-      if(ps2x.ButtonPressed(PSB_START) || Serial.read == 'A'){       //will be TRUE as long as button is pressed
+      keyboard = Serial.read();
+      if(ps2x.ButtonPressed(PSB_START) || keyboard == 'A'){       //will be TRUE as long as button is pressed
          Serial.println("Start just presed");
          mode=1;     //Autonomous mode
-      }else if(ps2x.ButtonPressed(PSB_SELECT) || Serial.read == 'M'){
+      }else if(ps2x.ButtonPressed(PSB_SELECT) || keyboard == 'M'){
           Serial.println("Select just pressed");  
           mode=0;     //Manual mode
-      }else if(ps2x.ButtonPressed(PSB_L2) || Serial.read == 'S'){
+      }else if(ps2x.ButtonPressed(PSB_L2) || keyboard == 'S'){
           Serial.println("Emergency Stop");  
           modeCommand = 'S';     //Manual mode
       }
@@ -166,30 +167,30 @@ void loop() {
       }else if(mode==0){    //Turn it to manual mode
         modeCommand = 'M';
         
-        if(ps2x.ButtonPressed(PSB_PAD_UP) || Serial.read() == 'F') {      //will be TRUE as long as button is pressed
+        if(ps2x.ButtonPressed(PSB_PAD_UP) || keyboard == 'F') {      //will be TRUE as long as button is pressed
           Serial.print("Up pressed");
           driveCommand='F';                                //Go Forward
-        }else if(ps2x.ButtonPressed(PSB_PAD_RIGHT) || Serial.read() == 'R'){
+        }else if(ps2x.ButtonPressed(PSB_PAD_RIGHT) || keyboard == 'R'){
           Serial.print("Right pressed");
           driveCommand='R';                                //Go to the Right
-       }else if(ps2x.ButtonPressed(PSB_PAD_LEFT) || Serial.read() == 'L'){
+       }else if(ps2x.ButtonPressed(PSB_PAD_LEFT) || keyboard == 'L'){
           Serial.print("LEFT pressed");
           driveCommand='L';                                //Go to the Left
-       }else if(ps2x.ButtonPressed(PSB_PAD_DOWN) || Serial.read() == 'B'){
+       }else if(ps2x.ButtonPressed(PSB_PAD_DOWN) || keyboard == 'B'){
           Serial.print("DOWN pressed");
           driveCommand='B';                                //Go Back
-       }else if(ps2x.ButtonPressed(PSB_CIRCLE) || Serial.read() == 'D'){               //will be TRUE if button was JUST pressed
+       }else if(ps2x.ButtonPressed(PSB_CIRCLE) || keyboard == 'D'){               //will be TRUE if button was JUST pressed
           Serial.println("Circle pressed");
           winchCommand = 'D';                            //Winch Down
-       }else if(ps2x.ButtonPressed(PSB_TRIANGLE) || Serial.read() == 'U'){
+       }else if(ps2x.ButtonPressed(PSB_TRIANGLE) || keyboard == 'U'){
           Serial.println("Triangle pressed");
           winchCommand = 'U';                             //Winch UP
        }
-       if(ps2x.ButtonPressed(PSB_L2) || Serial.read() == 'S'){
+       if(ps2x.ButtonPressed(PSB_L2) || keyboard == 'S'){
           Serial.println("L2 pressed");
           driveCommand = 'S';                              //Stop the thrusters
        }
-       if(ps2x.ButtonPressed(PSB_R2) || Serial.read() == 'H'){
+       if(ps2x.ButtonPressed(PSB_R2) || keyboard == 'H'){
           Serial.println("R2 pressed");
           winchCommand = 'H';                              //Stop the Winch
        }
@@ -238,5 +239,4 @@ void loop() {
     }
   Serial.println();
   }
-}
 }
