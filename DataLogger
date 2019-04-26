@@ -1,0 +1,97 @@
+#include <DS1307.h>
+#include <SD.h>
+#include <Wire.h>
+#include "MS5837.h"
+
+
+File myFile;
+MS5837 sensor;
+DS1307 rtc;
+
+const int chipSelect = 10;
+void setup() {
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+  pinMode(10, OUTPUT);
+   if (!SD.begin(10)) {
+    Serial.println("initialization failed!");
+    return;
+  }
+  Serial.println("initialization done.");
+
+  /*init RTC*/
+ rtc.set(0, 48, 9, 26, 4, 2019); //(set time and date)
+  
+  /*stop/pause RTC*/
+  //rtc.stop();
+
+  /*start RTC*/
+  rtc.start();
+  Wire.begin();
+
+  // Initialize pressure sensor
+  // Returns true if initialization was successful
+  // We can't continue with the rest of the program unless we can initialize the sensor
+  while (!sensor.init()) {
+    Serial.println("Init failed!");
+    Serial.println("\n\n\n");
+    delay(5000);
+  }
+  
+  sensor.setModel(MS5837::MS5837_30BA);
+  sensor.setFluidDensity(997); // kg/m^3 (freshwater, 1029 for seawater)
+ 
+}
+
+
+
+void loop() {
+  uint8_t sec, min, hour, day, month;
+  uint16_t year;
+    /*get time from RTC*/
+  rtc.get(&sec, &min, &hour, &day, &month, &year);
+  // put your main code here, to run repeatedly:
+   // open the file. note that only one file can be open at a time,
+  // so you have to close this one before opening another.
+  myFile = SD.open("OceanT.txt", FILE_WRITE);
+ 
+  // if the file opened okay, write to it:
+  if (myFile) {
+  myFile.print("\nTime: ");
+  myFile.print(hour, DEC);
+  myFile.print(":");
+  myFile.print(min, DEC);
+  myFile.print(":");
+  myFile.print(sec, DEC);
+
+  myFile.print("\nDate: ");
+  myFile.print(day, DEC);
+  myFile.print(".");
+  myFile.print(month, DEC);
+  myFile.print(".");
+  myFile.println(year, DEC);
+  
+    sensor.read();
+   myFile.print("Pressure: "); 
+   myFile.print(sensor.pressure()); 
+   myFile.println(" mbar");
+  
+   myFile.print("Temperature: "); 
+   myFile.print(sensor.temperature()); 
+   myFile.println(" deg C");
+  
+   myFile.print("Depth: "); 
+   myFile.print(sensor.depth()); 
+   myFile.println(" m");
+
+   delay(60000);
+  // close the file:
+    myFile.close();
+    Serial.println("done.");
+  } else {
+    // if the file didn't open, print an error:
+    Serial.println("ERROR OPENING File");
+  }
+
+
+}
