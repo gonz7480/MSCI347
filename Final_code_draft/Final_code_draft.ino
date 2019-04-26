@@ -1,3 +1,9 @@
+/* LAST EDITED AT 10:41 AM ON 26 APRIL 2019 BY SOPHIA ROSE
+ * THIS CODE GOES ON THE MEGA.
+ * NOTHING IS TESTED. PLEASE LOOK AT ALL COMMENTS THAT ARE IN
+ * ALL CAPS.
+ */
+
 //Libraries
 #include <SoftwareSerial.h> //TX RX library
 #include <Servo.h>  //Servo library
@@ -16,9 +22,9 @@ float des_LNG = -121.88472222;
 const byte RXGPS 5
 const byte TXGPS 4
 
-//Winch connection pins
-const byte RXWinch = 6;
-const byte TXWinch = 7;
+//UNO connection pins
+const byte RXUno = 6;
+const byte TXUno = 7;
 
 //Reed switch pin (master shut-off)
 const int REED_PIN = 2;
@@ -34,7 +40,7 @@ Servo RTmtr;
 Servo LTmtr;
 
 SoftwareSerial ss(RXGPS, TXGPS);  //The serial connection to the GPS device
-SoftwareSerial winch(RXWinch, TXWinch); //Serial conncetion with winch Arduino
+SoftwareSerial Uno(RXUno, TXUno); //Serial conncetion with Uno
 
 TinyGPSPlus gps;  //The TinyGPS++ object
 unsigned long lastUpdateTime = 0;  //Set last updated time to zero
@@ -57,6 +63,9 @@ int courseChangeNeeded;
 
 //boolean used with getHome()
 bool launch = true;
+
+//boolean to toggle manual/autopilot
+bool autopilot = true;
 
 // Function to read the magnetometer and convert output to degrees
 float compass() { //Get a new sensor event
@@ -128,6 +137,52 @@ void moveMotor(int mod, char dir, int wait = 1000){
 
 }
 
+//Function for autopilot navigation
+//Changes the speed of the motors based on distance from destination
+void autopilot(){
+  //If less than 1 meter away from destination, stay put
+  if (distanceToDestination <= 1) {
+    //When initially true, send signal to winch to lower benthic observatory
+    winch.println('x');
+    winchMode = 'D'
+
+    moveMotor(25, courseChange());
+  }//If less than 2 meters away, go slow
+  else if(distanceToDestination <= 2){
+    moveMotor(50, courseChange());
+    moveMotor(50, 'N');
+  }//If less than 10 meters away, go fairly fast
+  else if(distanceToDestination <= 10){
+    moveMotor(150, courseChange());
+    moveMotor(150, 'N');
+  }else{ //Else, go fast
+    moveMotor(200, courseChange());
+    moveMotor(200, 'N', 5000);
+  }
+}
+
+//Function for manual navigation
+void manual(){
+  Uno.listen();
+  while(Uno.available()){}
+    if(Uno.read() == 'R'){
+      right(50, 300);
+    }
+    if(Uno.read() == 'L'){
+      left(50, 300);
+    }
+    if(Uno.read() == 'F'){
+      forward(50, 300);
+    }
+    if(Uno.read() == 'B'){
+      backward(50, 300);
+    }
+    if(Uno.read() == 'S'){
+      stop();
+    }else{continue;}
+  }
+}
+
 //Function to save the GPS coordinates of where RoboBuoy is launched
 void getHome(){
   if(launch){
@@ -169,6 +224,9 @@ void setup() {
 void loop() {
   if(digitalRead(REED_PIN) == LOW){
     stop();
+    //I THINK THIS SHOULD BE SENT TO UNO SO IT CAN BE RECIEVED
+    //ON SHORE BUT IDK HOW TO MAKE SURE THE ONSHORE UNO GETS IT
+    Uno.print('S')
   }
 
   int sensorvalue = analogRead(A8); //read battery
@@ -182,6 +240,9 @@ void loop() {
 
   if (LipoVoltage < 14.3){
     stop();
+    //I THINK THIS SHOULD BE SENT TO UNO SO IT CAN BE RECIEVED
+    //ON SHORE BUT IDK HOW TO MAKE SURE THE ONSHORE UNO GETS IT
+    Uno.print('S')
   }
 /* Compass code based on the example in the Adafuit_LSM303_U library.
  * Select GPS lines are from the example in the TinyGPS++ library.
@@ -193,11 +254,21 @@ void loop() {
   //If yes, use manual override
   //break;
 
-  //Check if signal from Winch has been received
-  //If yes, goHome();
-  winch.listen();
-  if(winch.available()){
-    goHome();
+  //Check if signal from Uno has been received
+  Uno.listen();
+  if(Uno.available()){
+    if(Uno.read() == 'U'){ //IF BENTHIC OBSERVATORY IS UP
+      goHome();
+    }
+    else if(Uno.read() == 'S'){ //IF THE THRUSTERS NEED TO BE STOPPED
+      stop();
+    }
+    else if(Uno.read() == 'M'){ //IF TURNING ON AUTOPILOT
+      autopilot = false;
+    }
+    else if(Uno.read() == 'A'){
+      autopilot = true;
+    }
   }
 
   //If any characters have arrived from the GPS,
@@ -207,7 +278,9 @@ void loop() {
   }
 
   //Save initial GPS location
-  if(gps.location.isValid() && launch == true){getHome();}
+  if(gps.location.isValid() && gps.satellites.value() > 2 && launch == true){
+    getHome();
+  }else if(launch == true){break;} //Don't do anything until "home" coordinates are saved
 
   //Save current lat, lon, and heading
   curr_LAT = gps.location.lat();
@@ -234,44 +307,7 @@ void loop() {
   //and a heading that would lead RoboBuoy straight to the destination
   courseChangeNeeded = heading - courseToDestination;
 
-  //If less than 1 meter away from destination, stay put
-  if (distanceToDestination <= 1) {
-    //When initially true, send signal to winch to lower benthic observatory
-    winch.println('x');
-
-    moveMotor(25, courseChange());
-
-    if(debug){
-      Serial.print("crawl");
-      Serial.println(courseChange());
-    }
-  }//If less than 2 meters away, go slow
-  else if(distanceToDestination <= 2){
-    moveMotor(50, courseChange());
-    moveMotor(50, 'N');
-
-    if(debug){
-      Serial.print("slow ");
-      Serial.println(courseChange());
-    }
-  }//If less than 10 meters away, go fairly fast
-  else if(distanceToDestination <= 10){
-    moveMotor(150, courseChange());
-    moveMotor(150, 'N');
-
-    if(debug){
-      Serial.print("medium ");
-      Serial.println(courseChange());
-    }
-  }else{ //Else, go fast
-    moveMotor(200, courseChange());
-    moveMotor(200, 'N', 5000);
-
-    if(debug){
-      Serial.print("fast ");
-      Serial.println(courseChange());
-    }
-
-  }
+  if(autopilot){autopilot();}
+  else{manual();}
 
 }
