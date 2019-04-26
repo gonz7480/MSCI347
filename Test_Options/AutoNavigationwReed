@@ -159,7 +159,7 @@ void setup() {
   gpsSerial.begin(GPSBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3); //KB check pin numbers
-  pinMode(boxReed, INPUT); //set the reed switch as an input
+  pinMode(boxReed, INPUT_PULLUP); //set the reed switch as an input
   attachInterrupt(digitalPinToInterrupt(boxReed), reedCheck, LOW); //create the interrupt sequence for the reed switch
 
   setDest(36.653596, -121.793941);
