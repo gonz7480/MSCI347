@@ -4,6 +4,7 @@
  * Compass code based on the example in the Adafuit_LSM303_U library.
  * Select GPS lines are from the example in the TinyGPS++ library.
  * All movement functions were written primarily by: Sophia Rose, Kaitlyn Beardshear, Andrew Reyna
+ * Reed interrupt code written by Kaitlyn Beardshear
  */
 
 //Libraries
@@ -159,7 +160,7 @@ void setup() {
   gpsSerial.begin(GPSBaud);  //Begin software serial connection with GPS
   RTmtr.attach(5);  //Attach the servos to the pins
   LTmtr.attach(3); //KB check pin numbers
-  pinMode(boxReed, INPUT_PULLUP); //set the reed switch as an input
+  pinMode(boxReed, INPUT); //set the reed switch as an input
   attachInterrupt(digitalPinToInterrupt(boxReed), reedCheck, LOW); //create the interrupt sequence for the reed switch
 
   setDest(36.653596, -121.793941);
