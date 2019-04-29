@@ -4,7 +4,7 @@
 
 
 //Variables to change depth and time spent on bottom
-int depth = 1; //measured in meters 4
+int depth = 1; //measured in meters
 int bottomTime = 2; //measured in seconds
 
 #include <Servo.h>  //Servo library
@@ -53,7 +53,7 @@ void setup() {
   winchMtr.attach(30);
   pinMode(reelSwitch, INPUT_PULLUP);
 
-  dropTime = ((depth) * 14000); //The winch takes approx 14 seconds to unspool 1 meter of string, this calculates
+  dropTime = ((depth) * 7000); //The winch takes approx 7 seconds to unspool 1 meter of string, this calculates
   // how long the winch needs to unspool based on the given depth.
   winchWait = ((bottomTime) * 1000); //This changes the bottom time from seconds to milliseconds
 
