@@ -180,6 +180,7 @@ void reedCheck() {
 
 //function to pull  up the Benthic Observatory
 void winchUp () {
+  switchState = digitalRead(reelSwitch);
   while (switchState == 1) { //if the magnet is not connected, keep pulling up
     switchState = digitalRead(reelSwitch);
     winchMtr.writeMicroseconds(1200);
