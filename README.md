@@ -41,3 +41,5 @@ Safety:
 
 Test_Options:
   - AutoNavigationwReed: This allows for a basic GPS navigation launch with the reed interrupt included to stop the motors at any point
+  - AutoNavigationwWinch: This allows for GPS movement and dropping the Benthic Observatory
+  - DropPackage: This code just drops the Benthic Observatory without the use of GPS or propellors
