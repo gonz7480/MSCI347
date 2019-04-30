@@ -8,7 +8,7 @@ int bottomTime = 2; //Measured in seconds
 
 #include <Servo.h>  //Servo library
 
-int switchState; //Variable to hold if the switch is closed or not
+int reelState; //Variable to hold if the switch is closed or not
 int reelSwitch = 41; //Pin connected to the reel switch
 
 const int motorController = 30; //Winch controller
@@ -20,23 +20,23 @@ int dropLoops; //The number of times the winchDown loop cycles
 //Declare servos
 Servo winchMtr; //Winch controller
 
-//Function to pull  up the Benthic Observatory
-void winchUp() {
-  switchState = digitalRead(reelSwitch);
-  while (switchState == 1) { //If the switch is not connected, keep pulling up
-    switchState = digitalRead(reelSwitch);
+//function to pull  up the Benthic Observatory
+void winchUp () {
+  reelState = digitalRead(reelSwitch);
+  while (reelState == 1) { //if the magnet is not connected, keep pulling up
+    reelState = digitalRead(reelSwitch);
     winchMtr.writeMicroseconds(1200);
   }
-  if (switchState == 0) {
-    winchStop(); //Once the switch is connected, stop
+  if (reelState == 0) {
+    winchStop(); //once the magnet is connected, stop
   }
 }
 
 //Function to drop the Benthic Observatory
 void winchDown() {
   for (i = 0; i < dropLoops; i++) { //Checks the reelSwitch every 200ms just in case the line becomes tangled while dropping
-    switchState = digitalRead(reelSwitch);
-    if (switchState == 0) {
+    reelState = digitalRead(reelSwitch);
+    if (reelState == 0) {
       winchStop(); //Once the switch is connected, stop
     } else {
       winchMtr.writeMicroseconds(1700);
