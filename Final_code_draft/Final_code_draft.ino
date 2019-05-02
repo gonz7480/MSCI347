@@ -15,12 +15,12 @@
 bool debug = false;
 
 //destination lat and lon
-float des_LAT = 36.60337222;
-float des_LNG = -121.88472222;
+float des_LAT = 36.652741;
+float des_LNG = -121.793962;
 
 //GPS connection pins
-const byte RXGPS 5
-const byte TXGPS 4
+const byte RXGPS = 5;
+const byte TXGPS = 4;
 
 //UNO connection pins
 const byte RXUno = 6;
@@ -65,7 +65,7 @@ int courseChangeNeeded;
 bool launch = true;
 
 //boolean to toggle manual/autopilot
-bool autopilot = true;
+bool autonav = true;
 
 // Function to read the magnetometer and convert output to degrees
 float compass() { //Get a new sensor event
@@ -82,23 +82,33 @@ float compass() { //Get a new sensor event
  * Returns a character defining which direction to turn.
  * 'R' for right, 'L' for left, 'N' for none
  */
-char courseChange(){
-  if(courseChangeNeeded > -10 && courseChangeNeeded < 10){
+char courseChange() {
+  if (courseChangeNeeded > -10 && courseChangeNeeded < 10) {
+    digitalWrite(7, HIGH);
+    digitalWrite(6, HIGH);
     return 'N';
   }
-  else if(courseChangeNeeded < -180){
+  else if (courseChangeNeeded < -180) {
+    digitalWrite(7, HIGH);
     return 'L';
   }
-  else if(courseChangeNeeded < 180 && courseChangeNeeded > 0){
+  else if (courseChangeNeeded < 180 && courseChangeNeeded > 0) {
+    digitalWrite(7, HIGH);
     return 'L';
   }
-  else if(courseChangeNeeded >= 180){
+  else if (courseChangeNeeded >= 180) {
+    digitalWrite(6, HIGH);
     return 'R';
   }
-  else if(courseChangeNeeded >= -180  && courseChangeNeeded < 0){
+  else if (courseChangeNeeded >= -180  && courseChangeNeeded < 0) {
+    digitalWrite(6, HIGH);
     return 'R';
   }
-  else{return 'N';}
+  else {
+    digitalWrite(7, HIGH);
+    digitalWrite(6, HIGH);
+    return 'N';
+  }
 }
 
 // Function to stop the motors
@@ -121,17 +131,21 @@ void moveMotor(int mod, char dir, int wait = 1000){
     case 'L':
         RTmtr.writeMicroseconds(1500 - mod);
         LTmtr.writeMicroseconds(1500);
-        delay(500);
+        delay(wait);
         break;
     case 'R':
         //while(mod > 0){
         RTmtr.writeMicroseconds(1500);
         LTmtr.writeMicroseconds(1500 + mod);
-        delay(500);
+        delay(wait);
         break;
-    default:
+    case 'B':
         RTmtr.writeMicroseconds(1500 - mod);
         LTmtr.writeMicroseconds(1500 + mod);
+        delay(wait);
+    default:
+        RTmtr.writeMicroseconds(1500 + mod);
+        LTmtr.writeMicroseconds(1500 - mod);
         delay(wait);
   }
 
@@ -143,20 +157,20 @@ void autopilot(){
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
-    winch.println('x');
-    winchMode = 'D'
+    Uno.println('x');
+    //winchMode = 'D'
 
-    moveMotor(25, courseChange());
+    moveMotor(25, courseChange(), 500);
   }//If less than 2 meters away, go slow
   else if(distanceToDestination <= 2){
-    moveMotor(50, courseChange());
+    moveMotor(50, courseChange(), 500);
     moveMotor(50, 'N');
   }//If less than 10 meters away, go fairly fast
   else if(distanceToDestination <= 10){
-    moveMotor(150, courseChange());
+    moveMotor(150, courseChange(), 500);
     moveMotor(150, 'N');
   }else{ //Else, go fast
-    moveMotor(200, courseChange());
+    moveMotor(200, courseChange(), 500);
     moveMotor(200, 'N', 5000);
   }
 }
@@ -164,18 +178,18 @@ void autopilot(){
 //Function for manual navigation
 void manual(){
   Uno.listen();
-  while(Uno.available()){}
+  while(Uno.available()){
     if(Uno.read() == 'R'){
-      right(50, 300);
+      moveMotor(50, 'R', 300);
     }
     if(Uno.read() == 'L'){
-      left(50, 300);
+      moveMotor(50, 'L', 300);
     }
     if(Uno.read() == 'F'){
-      forward(50, 300);
+      moveMotor(50, 'N', 300);
     }
     if(Uno.read() == 'B'){
-      backward(50, 300);
+      moveMotor(50, 'B', 300);
     }
     if(Uno.read() == 'S'){
       stop();
@@ -226,7 +240,7 @@ void loop() {
     stop();
     //I THINK THIS SHOULD BE SENT TO UNO SO IT CAN BE RECIEVED
     //ON SHORE BUT IDK HOW TO MAKE SURE THE ONSHORE UNO GETS IT
-    Uno.print('S')
+    Uno.print('S');
   }
 
   int sensorvalue = analogRead(A8); //read battery
@@ -242,7 +256,7 @@ void loop() {
     stop();
     //I THINK THIS SHOULD BE SENT TO UNO SO IT CAN BE RECIEVED
     //ON SHORE BUT IDK HOW TO MAKE SURE THE ONSHORE UNO GETS IT
-    Uno.print('S')
+    Uno.print('S');
   }
 /* Compass code based on the example in the Adafuit_LSM303_U library.
  * Select GPS lines are from the example in the TinyGPS++ library.
@@ -264,10 +278,10 @@ void loop() {
       stop();
     }
     else if(Uno.read() == 'M'){ //IF TURNING ON AUTOPILOT
-      autopilot = false;
+      autonav = false;
     }
     else if(Uno.read() == 'A'){
-      autopilot = true;
+      autonav = true;
     }
   }
 
@@ -280,34 +294,36 @@ void loop() {
   //Save initial GPS location
   if(gps.location.isValid() && gps.satellites.value() > 2 && launch == true){
     getHome();
-  }else if(launch == true){break;} //Don't do anything until "home" coordinates are saved
-
-  //Save current lat, lon, and heading
-  curr_LAT = gps.location.lat();
-  curr_LNG = gps.location.lng();
-  heading = compass();
-
-
-  //Establish our current status
-  //These two lines are from the TinyGPS++ example
-  distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
-  courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, des_LAT, des_LNG);
-
-  if(debug){
-    Serial.println();
-    Serial.println(gps.location.isValid());
-    Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG,6);
-    Serial.print("CURRENT ANGLE: "); Serial.println(heading);
-    Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
-    Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
-    Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
   }
-
-  //calculate the difference in angle between current heading
-  //and a heading that would lead RoboBuoy straight to the destination
-  courseChangeNeeded = heading - courseToDestination;
-
-  if(autopilot){autopilot();}
-  else{manual();}
-
+  
+  //Don't do anything until "home" coordinates are saved
+  if(!launch){
+    //Save current lat, lon, and heading
+    curr_LAT = gps.location.lat();
+    curr_LNG = gps.location.lng();
+    heading = compass();
+  
+  
+    //Establish our current status
+    //These two lines are from the TinyGPS++ example
+    distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
+    courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, des_LAT, des_LNG);
+  
+    if(debug){
+      Serial.println();
+      Serial.println(gps.location.isValid());
+      Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG,6);
+      Serial.print("CURRENT ANGLE: "); Serial.println(heading);
+      Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
+      Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
+      Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
+    }
+  
+    //calculate the difference in angle between current heading
+    //and a heading that would lead RoboBuoy straight to the destination
+    courseChangeNeeded = heading - courseToDestination;
+  
+    if(autonav){autopilot();}
+    else{manual();}
+  }
 }
