@@ -1,21 +1,23 @@
- /* This is a simple version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
+ /* This is one version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
    interrupt included. The interrupt allows for the motors to be stopped at any point. This version allows for the Benthic
    Observatory to be dropped.
 
    Compass code based on the example in the Adafuit_LSM303_U library.
    Select GPS lines are from the example in the TinyGPS++ library.
    All movement functions were written primarily by: Sophia Rose, Kaitlyn Beardshear, Andrew Reyna
-   Reed interrupt code written by Kaitlyn Beardshear
+   Reed and switch interrupt code written by Kaitlyn Beardshear
    Motor code written by Cristian Arguera and Kaitlyn Beardshear
 */
 
-//Variables to set destination latitude and longitude
-float dest_LAT = 36.652741; //36.60337222; 
-float dest_LNG = -121.793962; //-121.88472222;
+//Variables to change based on the launch
+int depth = 3; //How deep the Benthic Observatory is lowered (measured in meters)
+int bottomTime = 30; //How long the Benthic Observatory sits on the seafloor (measured in seconds)
+int delayStart = 5; //How long to wait before dropping the Benthic Observatory (measured in minutes)
+float des_LAT = 36.60337222; //Destination Latitude
+float des_LNG = -121.88472222; //Destination Longitude
 
-//Variables to change depth and time spent on bottom
-int depth = 3; //measured in meters
-int bottomTime = 30; //measured in seconds
+//Toggle this boolean to turn on print statements for debuggings
+bool debug = false;
 
 //Libraries
 #include <SoftwareSerial.h> //TX RX library
@@ -28,61 +30,68 @@ int bottomTime = 30; //measured in seconds
 //Toggle this boolean to turn on print statements for debuggings
 bool debug = true;
 
-//Defined pins
-#define RXfromGPS 52 //receiving from GPS (the GPS' TX)
-#define TXtoGPS 53 //sending to the GPS (the GPS' RX)
+//Defined pins and global variables
+//Serial connection with the GPS
+#define RXfromGPS 52 //Receiving from GPS (the GPS' TX)
+#define TXtoGPS 53 //Sending to the GPS (the GPS' RX)
 
-const byte boxSwitch = 2; //Pin used to stop the motors manually, MUST be in pin (2,3,18,19,20,or 21) for interrupt sequence to work
-volatile byte boxState = HIGH; //Set reed switch to high
+//The box switch is used to stop the propellors manually
+#define boxSwitch 2 //Pin used to stop the motors manually, MUST be in pin 2,3,18,19,20,or 21 for interrupt sequence to work
+volatile byte boxState = HIGH; //Set box switch to high
 
-int reelState; //Variable to hold if the switch is closed or not
-int reelSwitch = 41; //Pin connected to the reel switch
+//The reel switch is used to stop the winch
+int reelState; //Variable to hold if the reel switch is closed or not
+#define reelSwitch 41 //Pin connected to the reel switch
 
+//Serial connection between the Mega and onboard Uno
 #define RXfromUno 23 //receiving from the Uno (the Uno's TX)
 #define TXtoUno 22 //sending to the Uno (the Uno's RX)
 
-const int motorController = 30; //Winch controller
+//Winch variables
+#define motorController 30 //Winch controller
+int delayTime; //Variable to hold the start delay in ms
 int dropTime; //Variable to hold the droptime in ms
 int winchWait; //Variable to hold the bottom time in ms
 int dropLoops; //The number of times the winchDown loop cycles
 
 //Baud rates
-#define GPSBaud 9600
-#define ConsoleBaud 115200
-#define UnoBaud 9600
+#define GPSBaud 9600 //GPS communication
+#define UnoBaud 9600 //Uno communication
+#define ConsoleBaud 115200 //Used for debugging
 
-#define Pi 3.14159
+#define Pi 3.14159 //Used for compass calculations
 
 //Declare servos
-Servo RTmtr; //left propellor
-Servo LTmtr; //right propellor
-Servo winchMtr; //winch controller
+Servo RTmtr; //Right propellor
+Servo LTmtr; //Left propellor
+Servo winchMtr; //Winch controller
 
-SoftwareSerial gpsSerial(RXfromGPS, TXtoGPS);  //The serial connection to the GPS device, input is (ArduinoRX, ArduinoTX)
-//RX and TX need to be paired opposite (eg GPS RX connects to Arduino TX). This is written from the Arduino's perspective
-//so the Arduino's RX recieves from the GPS' TX.
-SoftwareSerial unoSerial(RXfromUno, TXtoUno); //same description as above but with the Uno instead of GPS
+/** The serial connection to the GPS device, input is (ArduinoRX, ArduinoTX). RX and TX need to be paired opposite
+    (eg GPS RX connects to Arduino TX). This is written from the Arduino's perspective so the Arduino's RX
+    recieves from the GPS' TX. **/
+SoftwareSerial gpsSerial(RXfromGPS, TXtoGPS);
+SoftwareSerial unoSerial(RXfromUno, TXtoUno); //Same description as above but with the Uno instead of GPS
 
-TinyGPSPlus gps;  //The TinyGPS++ object
-unsigned long lastUpdateTime = 0;  //Set last updated time to zero
+TinyGPSPlus gps; //The TinyGPS++ object
+unsigned long lastUpdateTime = 0; //Set last updated time to zero
 
-//Compass object
-Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
+Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345); //Compass object
 
-//lat and lon of launching point
+//Lat and Long of launching point
 float home_LAT;
 float home_LNG;
 
-//current lat, lon, and heading
+//Current Lat, Lon, and heading
 float curr_LAT;
 float curr_LNG;
 float heading;
 
+//Compass variables
 float distanceToDestination;
 float courseToDestination;
 int courseChangeNeeded;
 
-//boolean used with getHome()
+//Boolean used with getHome()
 bool launch = true;
 
 // Function to read the magnetometer and convert output to degrees
@@ -98,8 +107,7 @@ float compass() { //Get a new sensor event
 
 /* Function to determine which direction RoboBuoy needs to turn to correct its heading
    Returns a character defining which direction to turn.
-   'R' for right, 'L' for left, 'N' for none
-*/
+   'R' for right, 'L' for left, 'N' for none */
 char courseChange() {
   if (courseChangeNeeded > -10 && courseChangeNeeded < 10) {
     //digitalWrite(7, HIGH);
@@ -134,8 +142,7 @@ char courseChange() {
             Must be greater than 25 if using BlueRobotics T100 Thrusters
    char dir: a character indicating the direction to turn
              'L' for left, 'R' for right
-   int wait: an integer to set the delay when not turning
-*/
+   int wait: an integer to set the delay when not turning */
 void moveMotor(int mod, char dir, int wait = 1000) {
   switch (dir) {
     case 'L':
@@ -171,57 +178,55 @@ void goHome() {
   dest_LNG = home_LNG;
 }
 
-//Function for the reed interrrupt to allow the propellors to stop
-void boxCheck() {
-  //If the reed switch reads low (when the magnet is connected) stop motors
+//Function for the box reed interrrupt
+void boxCheck() { //If the box reed reads low (when the magnet is connected) stop motors
   RTmtr.writeMicroseconds(1500);
   LTmtr.writeMicroseconds(1500);
 }
 
-//function to pull  up the Benthic Observatory
+//Function to pull  up the Benthic Observatory
 void winchUp () {
   reelState = digitalRead(reelSwitch);
-  while (reelState == 1) { //if the magnet is not connected, keep pulling up
+  while (reelState == 1) { //If the switch is not connected, keep pulling up
     reelState = digitalRead(reelSwitch);
     winchMtr.writeMicroseconds(1200);
   }
   if (reelState == 0) {
-    winchStop(); //once the magnet is connected, stop
+    winchStop(); //Once the switch is connected, stop
   }
 }
 
 //Function to drop the Benthic Observatory
 void winchDown() {
-  for (int i = 0; i < dropLoops; i++) { //Checks the reelSwitch every 200ms just in case the line becomes tangled while dropping
+  for (int i = 0; i < dropLoops; i++) { //Checks the reelSwitch every 200 ms just in case the line becomes tangled while dropping
     reelState = digitalRead(reelSwitch);
-    if (reelState == 0) {
-      winchStop(); //Once the switch is connected, stop
+    if (reelState == 0) { //If the switch is connected, stop
+      winchStop();
     } else {
       winchMtr.writeMicroseconds(1700);
     }
     delay(200);
   }
 }
+
 //Function to stop the winch
 void winchStop () {
   winchMtr.writeMicroseconds(1500);
 }
 
+//Function for the winch to hold the Benthic Observatory at the desired depth
 void winchPause(int winchWait) {
   winchMtr.writeMicroseconds(1500);
   delay(winchWait);
 }
 
 void setup() {
-  //pinMode(6, OUTPUT);
-  //pinMode(7, OUTPUT);
-  
-  Serial.begin(ConsoleBaud);  //Begin connection with the serial monitor
-  gpsSerial.begin(GPSBaud);  //Begin software serial connection with GPS
+  Serial.begin(ConsoleBaud); //Begin connection with the serial monitor
+  gpsSerial.begin(GPSBaud); //Begin software serial connection with GPS
   unoSerial.begin(UnoBaud); //Begin the software serial connection with the Uno
 
-  RTmtr.attach(10);  //Attach the servos to the pins
-  LTmtr.attach(11); //KB check pin numbers
+  RTmtr.attach(10); //Attach the servos to the pins
+  LTmtr.attach(11);
   winchMtr.attach(30);
 
   //pinMode(boxSwitch, INPUT_PULLUP); //Set the box reed switch as an input
@@ -233,7 +238,7 @@ void setup() {
   dropLoops = ((dropTime) / 200); //The loop needs to cycle every 200 ms for the total amount of time
   winchWait = ((bottomTime) * 1000); //This changes the bottom time from seconds to milliseconds
 
-  // Initialise the Compass
+  //Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
     Serial.println("Oops, no Compass detected. Check your wiring!");
     while (1);
@@ -254,7 +259,7 @@ void loop() {
   //If yes, goHome();
   unoSerial.listen();
   if(unoSerial.available()){
-    goHome();  
+    goHome();
   }
 
   //If any characters have arrived from the GPS,
@@ -276,13 +281,13 @@ void loop() {
     curr_LAT = gps.location.lat();
     curr_LNG = gps.location.lng();
     heading = compass();
-  
-  
+
+
     //Establish our current status
     //These two lines are from the TinyGPS++ example
     distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, dest_LAT, dest_LNG);
     courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, dest_LAT, dest_LNG);
-  
+
     if (debug) {
       Serial.println();
       Serial.print("Valid? "); Serial.println(gps.location.isValid());
@@ -292,11 +297,11 @@ void loop() {
       Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
       Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
     }
-  
+
     //calculate the difference in angle between current heading
     //and a heading that would lead RoboBuoy straight to the destination
     courseChangeNeeded = heading - courseToDestination;
-  
+
     //If less than 1 meter away from destination, stay put
     if (distanceToDestination <= 1) {
       moveMotor(30, courseChange());
@@ -307,32 +312,32 @@ void loop() {
       }
     }//If less than 2 meters away, go slow
     else if (distanceToDestination <= 2) {
-      moveMotor(30, courseChange());
-      moveMotor(30, 'N');
-  
+      moveMotor(50, courseChange());
+      moveMotor(50, 'N');
+
       if (debug) {
         Serial.print("slow ");
         Serial.println(courseChange());
       }
     }//If less than 10 meters away, go fairly fast
     else if (distanceToDestination <= 10) {
-      moveMotor(30, courseChange());
-      moveMotor(30, 'N');
-  
+      moveMotor(100, courseChange());
+      moveMotor(100, 'N');
+
       if (debug) {
         Serial.print("medium ");
         Serial.println(courseChange());
       }
     } else { //Else, go fast
-      moveMotor(30, courseChange());
-      moveMotor(30, 'N', 5000);
-  
+      moveMotor(200, courseChange());
+      moveMotor(200, 'N', 5000);
+
       if (debug) {
         Serial.print("fast ");
         Serial.println(courseChange());
       }
     }
-    
+
     //digitalWrite(6, LOW);
     //digitalWrite(7, LOW);
   }
