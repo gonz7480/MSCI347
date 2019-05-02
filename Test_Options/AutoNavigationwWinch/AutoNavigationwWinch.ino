@@ -216,7 +216,7 @@ void setup() {
   winchMtr.attach(30);
 
   pinMode(boxReed, INPUT_PULLUP); //Set the box reed switch as an input
-  pinMode(reedSwitch, INPUT_PULLUP); //Set the winch reed switch as an input
+  //pinMode(reedSwitch, INPUT_PULLUP); //Set the winch reed switch as an input
   attachInterrupt(digitalPinToInterrupt(boxReed), reedCheck, LOW); //Create the interrupt sequence for the reed switch
 
   setDest(36.60337222, -121.88472222); //Set the destination coordinates (lat, long)
