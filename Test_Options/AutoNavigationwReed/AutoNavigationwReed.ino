@@ -1,6 +1,6 @@
 /* This is a simple version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
  * interrupt included. The interrupt allows for the motors to be stopped at any point.
- *  
+ *
  * Compass code based on the example in the Adafuit_LSM303_U library.
  * Select GPS lines are from the example in the TinyGPS++ library.
  * All movement functions were written primarily by: Sophia Rose, Kaitlyn Beardshear, Andrew Reyna
@@ -34,7 +34,7 @@ volatile byte reedState = HIGH; //set reed switch to high
 Servo RTmtr;
 Servo LTmtr;
 
-SoftwareSerial gpsSerial(RXfromGPS, TXtoGPS);  //The serial connection to the GPS device, input is (ArduinoRX, ArduinoTX) 
+SoftwareSerial gpsSerial(RXfromGPS, TXtoGPS);  //The serial connection to the GPS device, input is (ArduinoRX, ArduinoTX)
 //RX and TX need to be paired opposite (eg GPS RX connects to Arduino TX). This is written from the Arduino's perspective
 //so the Arduino's RX recieves from the GPS' TX.
 
@@ -184,7 +184,7 @@ void loop() {
 
   //Check if signal from Winch has been received
   //If yes, goHome();
-  
+
   //If any characters have arrived from the GPS,
   //send them to the TinyGPS++ object
   while (gpsSerial.available() > 0) {
@@ -222,8 +222,8 @@ void loop() {
   //If less than 1 meter away from destination, stay put
   if (distanceToDestination <= 1) {
     //When initially true, send signal to winch to lower benthic observatory
-    
-    moveMotor(25, courseChange());
+
+    moveMotor(10, courseChange());
 
     if(debug){
       Serial.print("crawl ");
@@ -231,8 +231,8 @@ void loop() {
     }
   }//If less than 2 meters away, go slow
   else if(distanceToDestination <= 2){
-    moveMotor(50, courseChange());
-    moveMotor(50, 'N');
+    moveMotor(25, courseChange());
+    moveMotor(25, 'N');
 
     if(debug){
       Serial.print("slow ");
