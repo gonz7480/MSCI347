@@ -257,6 +257,11 @@ void loop() {
 
   //Check if signal from Winch has been received
   //If yes, goHome();
+
+//IF WIRELESS COMMUNICATION DOESN'T WORK, ADD AN INPUT PIN FROM THE BENTHIC OBSERVATORY REED switch
+//TO THE MEGA AND CHANGE THIS IF STATEMENT SO THAT goHome(); IS RUN WHEN THE OBSERVATORY IS BACK UP
+//BASED ON THE SIGNAL FROM THE REED SWITCH
+
   unoSerial.listen();
   if(unoSerial.available()){
     goHome();
@@ -305,7 +310,7 @@ void loop() {
     //If less than 1 meter away from destination, stay put
     if (distanceToDestination <= 1) {
       moveMotor(30, courseChange());
-  
+
       if (debug) {
         Serial.print("crawl ");
         Serial.println(courseChange());
