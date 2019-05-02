@@ -1,4 +1,4 @@
-/* This is a simple version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
+ /* This is a simple version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
    interrupt included. The interrupt allows for the motors to be stopped at any point. This version allows for the Benthic
    Observatory to be dropped.
 
@@ -28,10 +28,10 @@ bool debug = false;
 #define RXfromGPS 52 //receiving from GPS (the GPS' TX)
 #define TXtoGPS 53 //sending to the GPS (the GPS' RX)
 
-const byte boxReed = 2; //Pin used to stop the motors manually, MUST be in pin (2,3,18,19,20,or 21) for interrupt sequence to work
-volatile byte reedState = HIGH; //Set reed switch to high
+const byte boxSwitch = 2; //Pin used to stop the motors manually, MUST be in pin (2,3,18,19,20,or 21) for interrupt sequence to work
+volatile byte boxState = HIGH; //Set reed switch to high
 
-int switchState; //Variable to hold if the switch is closed or not
+int reelState; //Variable to hold if the switch is closed or not
 int reelSwitch = 41; //Pin connected to the reel switch
 
 #define RXfromUno 23 //receiving from the Uno (the Uno's TX)
@@ -40,6 +40,7 @@ int reelSwitch = 41; //Pin connected to the reel switch
 const int motorController = 30; //Winch controller
 int dropTime; //Variable to hold the droptime in ms
 int winchWait; //Variable to hold the bottom time in ms
+int dropLoops; //The number of times the winchDown loop cycles
 
 //Baud rates
 #define GPSBaud 9600
@@ -172,7 +173,7 @@ void goHome() {
 }
 
 //Function for the reed interrrupt to allow the propellors to stop
-void reedCheck() {
+void boxCheck() {
   //If the reed switch reads low (when the magnet is connected) stop motors
   RTmtr.writeMicroseconds(1500);
   LTmtr.writeMicroseconds(1500);
@@ -180,22 +181,28 @@ void reedCheck() {
 
 //function to pull  up the Benthic Observatory
 void winchUp () {
-  switchState = digitalRead(reelSwitch);
-  while (switchState == 1) { //if the magnet is not connected, keep pulling up
-    switchState = digitalRead(reelSwitch);
+  reelState = digitalRead(reelSwitch);
+  while (reelState == 1) { //if the magnet is not connected, keep pulling up
+    reelState = digitalRead(reelSwitch);
     winchMtr.writeMicroseconds(1200);
   }
-  if (switchState == 0) {
+  if (reelState == 0) {
     winchStop(); //once the magnet is connected, stop
   }
 }
 
 //Function to drop the Benthic Observatory
-void winchDown (int dropTime) {
-  winchMtr.writeMicroseconds(1700);
-  delay(dropTime);
+void winchDown() {
+  for (int i = 0; i < dropLoops; i++) { //Checks the reelSwitch every 200ms just in case the line becomes tangled while dropping
+    reelState = digitalRead(reelSwitch);
+    if (reelState == 0) {
+      winchStop(); //Once the switch is connected, stop
+    } else {
+      winchMtr.writeMicroseconds(1700);
+    }
+    delay(200);
+  }
 }
-
 //Function to stop the winch
 void winchStop () {
   winchMtr.writeMicroseconds(1500);
@@ -215,15 +222,16 @@ void setup() {
   LTmtr.attach(11); //KB check pin numbers
   winchMtr.attach(30);
 
-  pinMode(boxReed, INPUT_PULLUP); //Set the box reed switch as an input
-  //pinMode(reedSwitch, INPUT_PULLUP); //Set the winch reed switch as an input
-  attachInterrupt(digitalPinToInterrupt(boxReed), reedCheck, LOW); //Create the interrupt sequence for the reed switch
+  pinMode(boxSwitch, INPUT_PULLUP); //Set the box reed switch as an input
+  pinMode(reelSwitch, INPUT_PULLUP); //Set the winch switch as an input
+  attachInterrupt(digitalPinToInterrupt(boxSwitch), boxCheck, LOW); //Create the interrupt sequence for the reed switch
 
   setDest(36.60337222, -121.88472222); //Set the destination coordinates (lat, long)
 
-  dropTime = (depth * 7000); //The winch takes approx 7 seconds to unspool 1 meter of string, this calculates
+  dropTime = ((depth) * 7000); //The winch takes approx 7 seconds to unspool 1 meter of string, this calculates
   // how long the winch needs to unspool based on the given depth
-  winchWait = (bottomTime * 1000); //This changes the bottom time from seconds to milliseconds
+  dropLoops = ((dropTime) / 200); //The loop needs to cycle every 200 ms for the total amount of time
+  winchWait = ((bottomTime) * 1000); //This changes the bottom time from seconds to milliseconds
 
   // Initialise the Compass
   if (!mag.begin()) { //Compass failed to initialize, check the connections
@@ -287,10 +295,10 @@ void loop() {
 
     moveMotor(25, courseChange());
 
-    winchDown(dropTime);
+    winchDown(); //KB change this function
     winchPause(winchWait);
-    winchUp();
-    goHome();  //Is this the correct way to return to home?
+    winchUp();  //KB change this function
+    goHome();
 
     if (debug) {
       Serial.print("crawl ");
