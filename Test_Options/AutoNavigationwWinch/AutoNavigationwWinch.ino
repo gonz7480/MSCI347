@@ -1,4 +1,4 @@
- /* This is one version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
+/* This is one version of the code that just uses the Mega. It moves the buoy to the destination with the reed switch
    interrupt included. The interrupt allows for the motors to be stopped at any point. This version allows for the Benthic
    Observatory to be dropped.
 
@@ -26,9 +26,6 @@ bool debug = false;
 #include <Wire.h>  //I2C library
 #include <Adafruit_Sensor.h>  //Sensor library
 #include <Adafruit_LSM303_U.h>  //Compass library
-
-//Toggle this boolean to turn on print statements for debuggings
-bool debug = true;
 
 //Defined pins and global variables
 //Serial connection with the GPS
@@ -59,7 +56,7 @@ int dropLoops; //The number of times the winchDown loop cycles
 #define UnoBaud 9600 //Uno communication
 #define ConsoleBaud 115200 //Used for debugging
 
-#define Pi 3.14159 //Used for compass calculations
+#define Pi 3.14159 //Used for compass calculations 
 
 //Declare servos
 Servo RTmtr; //Right propellor
@@ -110,29 +107,21 @@ float compass() { //Get a new sensor event
    'R' for right, 'L' for left, 'N' for none */
 char courseChange() {
   if (courseChangeNeeded > -10 && courseChangeNeeded < 10) {
-    //digitalWrite(7, HIGH);
-    //digitalWrite(6, HIGH);
     return 'N';
   }
   else if (courseChangeNeeded < -180) {
-    //digitalWrite(7, HIGH);
     return 'L';
   }
   else if (courseChangeNeeded < 180 && courseChangeNeeded > 0) {
-    //digitalWrite(7, HIGH);
     return 'L';
   }
   else if (courseChangeNeeded >= 180) {
-    //digitalWrite(6, HIGH);
     return 'R';
   }
   else if (courseChangeNeeded >= -180  && courseChangeNeeded < 0) {
-    //digitalWrite(6, HIGH);
     return 'R';
   }
   else {
-    //digitalWrite(7, HIGH);
-    //digitalWrite(6, HIGH);
     return 'N';
   }
 }
@@ -163,6 +152,14 @@ void moveMotor(int mod, char dir, int wait = 1000) {
   }
 }
 
+/* Function to set destination coordinates
+   float lat: latitude
+   float lon: longitude */
+void setDest(float lat, float lon) {
+  des_LAT = lat;
+  des_LNG = lon;
+}
+
 //Function to save the GPS coordinates of where RoboBuoy is launched
 void getHome() {
   if (launch) {
@@ -174,8 +171,8 @@ void getHome() {
 
 //Function to set destination to launching point for retrieval
 void goHome() {
-  dest_LAT = home_LAT;
-  dest_LNG = home_LNG;
+  des_LAT = home_LAT;
+  des_LNG = home_LNG;
 }
 
 //Function for the box reed interrrupt
@@ -201,7 +198,7 @@ void winchDown() {
   for (int i = 0; i < dropLoops; i++) { //Checks the reelSwitch every 200 ms just in case the line becomes tangled while dropping
     reelState = digitalRead(reelSwitch);
     if (reelState == 0) { //If the switch is connected, stop
-      winchStop();
+      winchStop(); 
     } else {
       winchMtr.writeMicroseconds(1700);
     }
@@ -229,9 +226,11 @@ void setup() {
   LTmtr.attach(11);
   winchMtr.attach(30);
 
-  //pinMode(boxSwitch, INPUT_PULLUP); //Set the box reed switch as an input
-  //pinMode(reelSwitch, INPUT_PULLUP); //Set the winch switch as an input
+  pinMode(boxSwitch, INPUT_PULLUP); //Set the box reed switch as an input
+  pinMode(reelSwitch, INPUT_PULLUP); //Set the winch switch as an input
   attachInterrupt(digitalPinToInterrupt(boxSwitch), boxCheck, LOW); //Create the interrupt sequence for the reed switch
+
+  setDest(des_LAT, des_LNG); //Set the destination coordinates (lat, long)
 
   dropTime = ((depth) * 7000); //The winch takes approx 7 seconds to unspool 1 meter of string, this calculates
   // how long the winch needs to unspool based on the given depth
@@ -258,15 +257,6 @@ void loop() {
   //Check if signal from Winch has been received
   //If yes, goHome();
 
-//IF WIRELESS COMMUNICATION DOESN'T WORK, ADD AN INPUT PIN FROM THE BENTHIC OBSERVATORY REED switch
-//TO THE MEGA AND CHANGE THIS IF STATEMENT SO THAT goHome(); IS RUN WHEN THE OBSERVATORY IS BACK UP
-//BASED ON THE SIGNAL FROM THE REED SWITCH
-
-  unoSerial.listen();
-  if(unoSerial.available()){
-    goHome();
-  }
-
   //If any characters have arrived from the GPS,
   //send them to the TinyGPS++ object
   while (gpsSerial.available() > 0) {
@@ -274,76 +264,74 @@ void loop() {
   }
 
   //Save initial GPS location
-  if (gps.location.isValid() && launch == true) {
+  if (gps.location.isValid()) {
     getHome();
-
-    if(debug){Serial.print(dest_LAT); Serial.print(" "); Serial.println(dest_LNG);}
   }
 
-  if(!launch){
-
-    //Save current lat, lon, and heading
-    curr_LAT = gps.location.lat();
-    curr_LNG = gps.location.lng();
-    heading = compass();
+  //Save current lat, lon, and heading
+  curr_LAT = gps.location.lat();
+  curr_LNG = gps.location.lng();
+  heading = compass();
 
 
-    //Establish our current status
-    //These two lines are from the TinyGPS++ example
-    distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, dest_LAT, dest_LNG);
-    courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, dest_LAT, dest_LNG);
+  //Establish our current status
+  //These two lines are from the TinyGPS++ example
+  distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
+  courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, des_LAT, des_LNG);
+
+  if (debug) {
+    Serial.println();
+    Serial.println(gps.location.isValid());
+    Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG, 6);
+    Serial.print("CURRENT ANGLE: "); Serial.println(heading);
+    Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
+    Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
+    Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
+  }
+
+  //Calculate the difference in angle between current heading and a heading that would lead RoboBuoy straight to the destination
+  courseChangeNeeded = heading - courseToDestination;
+
+  //If less than 1 meter away from destination, stay put
+  if (distanceToDestination <= 1) {
+    //When initially true, send signal to winch to lower benthic observatory
+
+    moveMotor(25, courseChange());
+
+    winchDown();
+    winchPause(winchWait);
+    winchUp();
+    goHome();
 
     if (debug) {
-      Serial.println();
-      Serial.print("Valid? "); Serial.println(gps.location.isValid());
-      Serial.print("LAT: "); Serial.print(curr_LAT, 6); Serial.print("  LON: "); Serial.println(curr_LNG, 6);
-      Serial.print("CURRENT ANGLE: "); Serial.println(heading);
-      Serial.print("COURSE TO DEST: "); Serial.println(courseToDestination);
-      Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
-      Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
+      Serial.print("crawl ");
+      Serial.println(courseChange());
     }
+  } //If less than 2 meters away, go slow
+  else if (distanceToDestination <= 2) {
+    moveMotor(50, courseChange());
+    moveMotor(50, 'N');
 
-    //calculate the difference in angle between current heading
-    //and a heading that would lead RoboBuoy straight to the destination
-    courseChangeNeeded = heading - courseToDestination;
-
-    //If less than 1 meter away from destination, stay put
-    if (distanceToDestination <= 1) {
-      moveMotor(30, courseChange());
-
-      if (debug) {
-        Serial.print("crawl ");
-        Serial.println(courseChange());
-      }
-    }//If less than 2 meters away, go slow
-    else if (distanceToDestination <= 2) {
-      moveMotor(50, courseChange());
-      moveMotor(50, 'N');
-
-      if (debug) {
-        Serial.print("slow ");
-        Serial.println(courseChange());
-      }
-    }//If less than 10 meters away, go fairly fast
-    else if (distanceToDestination <= 10) {
-      moveMotor(100, courseChange());
-      moveMotor(100, 'N');
-
-      if (debug) {
-        Serial.print("medium ");
-        Serial.println(courseChange());
-      }
-    } else { //Else, go fast
-      moveMotor(200, courseChange());
-      moveMotor(200, 'N', 5000);
-
-      if (debug) {
-        Serial.print("fast ");
-        Serial.println(courseChange());
-      }
+    if (debug) {
+      Serial.print("slow ");
+      Serial.println(courseChange());
     }
+  } //If less than 10 meters away, go fairly fast
+  else if (distanceToDestination <= 10) {
+    moveMotor(150, courseChange());
+    moveMotor(150, 'N');
 
-    //digitalWrite(6, LOW);
-    //digitalWrite(7, LOW);
+    if (debug) {
+      Serial.print("medium ");
+      Serial.println(courseChange());
+    }
+  } else { //Else, go fast
+    moveMotor(200, courseChange());
+    moveMotor(200, 'N', 5000);
+
+    if (debug) {
+      Serial.print("fast ");
+      Serial.println(courseChange());
+    }
   }
 }
