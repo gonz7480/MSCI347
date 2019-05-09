@@ -238,8 +238,6 @@ void setup() {
 void loop() {
   if(digitalRead(REED_PIN) == LOW){
     stop();
-    //I THINK THIS SHOULD BE SENT TO UNO SO IT CAN BE RECIEVED
-    //ON SHORE BUT IDK HOW TO MAKE SURE THE ONSHORE UNO GETS IT
     Uno.print('S');
   }
 
@@ -295,20 +293,20 @@ void loop() {
   if(gps.location.isValid() && gps.satellites.value() > 2 && launch == true){
     getHome();
   }
-  
+
   //Don't do anything until "home" coordinates are saved
   if(!launch){
     //Save current lat, lon, and heading
     curr_LAT = gps.location.lat();
     curr_LNG = gps.location.lng();
     heading = compass();
-  
-  
+
+
     //Establish our current status
     //These two lines are from the TinyGPS++ example
     distanceToDestination = TinyGPSPlus::distanceBetween(curr_LAT, curr_LNG, des_LAT, des_LNG);
     courseToDestination = TinyGPSPlus::courseTo(curr_LAT, curr_LNG, des_LAT, des_LNG);
-  
+
     if(debug){
       Serial.println();
       Serial.println(gps.location.isValid());
@@ -318,11 +316,11 @@ void loop() {
       Serial.print("DISTANCE: "); Serial.print(distanceToDestination);
       Serial.println(" meters to go."); Serial.print("INSTRUCTION: ");
     }
-  
+
     //calculate the difference in angle between current heading
     //and a heading that would lead RoboBuoy straight to the destination
     courseChangeNeeded = heading - courseToDestination;
-  
+
     if(autonav){autopilot();}
     else{manual();}
   }
