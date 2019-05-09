@@ -18,7 +18,6 @@ SoftwareSerial navigation (RXNav, TXNav);
 
 void up (){
    WenchMtr.writeMicroseconds(1200);
-  ;
 }
 void down (int time){
   WenchMtr.writeMicroseconds(1700);
