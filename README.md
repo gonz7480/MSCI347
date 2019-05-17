@@ -2,9 +2,18 @@
 ## Ocean Instrumentation Capstone Project
 ## CSUMB's Spring 2019 MSCI 437 Class
 
-This repository holds all the software for **RoboBuoy**, an autonomous surface-swimming datalogger.
+This repository holds all the software for **SeaWinch**, an autonomous surface-swimming datalogger.
 
 ### Folder Hierarchy
+# Final Scripts
+All of the final versions of the scripts used for SeaWinch. 
+  - AutoNavigation: For autonomous navigation and winch drop
+  - new_talk: For autonomous navigation, winch drop, and wireless communication between SeaWinch and on-shore controls using a single router
+  - RoboBuoyBoatBySWM190426 and RoboBuoyShoreBySWM190420: For autonomous navigation, winch drop, and wireless communication between SeaWinch and on-shore controls using two routers
+
+# Previous Versions
+All previous versions of all the software written, including examples found online that we used for testing and inspiration.
+
 Arduino Examples:
   - Arduino_GPS_Example: Example code for connecting a Parallax GPS to an Arduino.
                          Copied from Arduino Playground. https://playground.arduino.cc/Tutorials/GPS
